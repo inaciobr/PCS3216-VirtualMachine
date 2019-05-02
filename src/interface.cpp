@@ -1,51 +1,75 @@
-#include "interface.h"
-#include "assembler.h"
-#include "virtualMachine.h"
+#include "interface.hpp"
+#include "assembler.hpp"
+#include "virtualMachine.hpp"
 
 #include <iostream>
-
-
-Interface::Interface() {
-
-}
-
-
-Interface::~Interface() {
-
-}
+#include <fstream>
 
 
 void Interface::start() {
 	std::cout << "Welcome!" << std::endl;
+	this->menu();
+}
 
-	std::cout << "Menu:" << std::endl;
-	std::cout << "1. Assembler" << std::endl;
-	std::cout << "2. Virtual Machine" << std::endl;
-	std::cout << "3. Exit" << std::endl;
-	std::cout << "Type the number relative to the option:" << std::endl;
-
+void Interface::menu() {
 	int menu;
-	std::cin >> menu;
 
-	switch (menu) {
-	case 1: {
-		std::string fileName = "test.asm";
+	while (true) {
+		std::cout << std::endl;
+		std::cout << "1. Assembler" << std::endl;
+		std::cout << "2. Virtual Machine" << std::endl;
+		std::cout << "3. Exit" << std::endl;
+		std::cout << "\nEnter the number of an option: ";
+		std::cin >> menu;
 
-		Assembler assembler;
-		assembler.run(fileName);
+		switch (menu) {
+		case 1:	// Assembler
+			this->assemblerMenu();
+			break;
 
-		std::cout << assembler.mnemonics[0].name << std::endl;
-		break;
+		case 2:	// Virtual Machine
+			this->virtualMachineMenu();
+			break;
+
+		default: // Exit
+			return;
+		}
+	}
+}
+
+std::string Interface::inputFile() {
+	std::string fileName;
+
+	while (true) {
+		std::cout << "Enter the file name: ";
+		std::cin >> fileName;
+		std::cout << std::endl;
+
+		if (std::ifstream(fileName))
+			break;
+
+		std::cout << "File can't be opened." << std::endl;
 	}
 
-	case 2: {
-		virtualMachine vm;
-		break;
-	}
+	return fileName;
+}
 
-	default:
-		break;
-	}
+void Interface::assemblerMenu() {
+	//std::string fileName = this->inputFile();
+	std::string fileName = "test.asm";
 
-	system("pause");
+	Assembler assembler;
+	assembler.assemble(fileName);
+
+	return;
+}
+
+void Interface::virtualMachineMenu() {
+	std::string fileName = this->inputFile();
+
+	VirtualMachine VM;
+	VM.load(fileName);
+	VM.run();
+
+	return;
 }

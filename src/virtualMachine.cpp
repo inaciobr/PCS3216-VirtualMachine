@@ -1,11 +1,22 @@
-#include "virtualMachine.h"
+#include "virtualMachine.hpp"
+
+#include <iostream>
+#include <fstream>
 
 
-virtualMachine::virtualMachine() {
+VirtualMachine::VirtualMachine() {
 
 }
 
 
-virtualMachine::~virtualMachine() {
+VirtualMachine::~VirtualMachine() {
+
+}
+
+void VirtualMachine::load(std::string fileName) {
+
+}
+
+void VirtualMachine::run() {
 
 }
