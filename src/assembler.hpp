@@ -6,10 +6,14 @@
 
 class Assembler {
 public:
-	Assembler();
+	Assembler(std::string fileName);
 	~Assembler();
 
-	void assemble(std::string fileName);
+	void assemble();
 
 	static const std::map<const char*, unsigned int> mnemonics;
+
+private:
+	std::string inputFile;
+	std::string outputFile;
 };

@@ -12,26 +12,28 @@ void Interface::start() {
 }
 
 void Interface::menu() {
+	enum options { EXIT, ASSEMBLER, VIRTUALMACHINE };
 	int menu;
 
 	while (true) {
 		std::cout << std::endl;
-		std::cout << "1. Assembler" << std::endl;
-		std::cout << "2. Virtual Machine" << std::endl;
-		std::cout << "3. Exit" << std::endl;
+		std::cout << EXIT << ". Exit" << std::endl;
+		std::cout << ASSEMBLER << ". Assembler" << std::endl;
+		std::cout << VIRTUALMACHINE << ". Virtual Machine" << std::endl;
 		std::cout << "\nEnter the number of an option: ";
 		std::cin >> menu;
 
 		switch (menu) {
-		case 1:	// Assembler
+		case ASSEMBLER:
 			this->assemblerMenu();
 			break;
 
-		case 2:	// Virtual Machine
+		case VIRTUALMACHINE:
 			this->virtualMachineMenu();
 			break;
 
-		default: // Exit
+		case EXIT:
+		default:
 			return;
 		}
 	}
@@ -56,10 +58,10 @@ std::string Interface::inputFile() {
 
 void Interface::assemblerMenu() {
 	//std::string fileName = this->inputFile();
-	std::string fileName = "test.asm";
+	std::string fileName = "assembly/test.asm";
 
-	Assembler assembler;
-	assembler.assemble(fileName);
+	Assembler assembler(fileName);
+	assembler.assemble();
 
 	return;
 }

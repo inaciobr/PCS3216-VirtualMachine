@@ -23,14 +23,18 @@ const std::map<const char*, unsigned int> Assembler::mnemonics = {
 	//{??, 0xF000}		// Free
 };
 
-Assembler::Assembler() {
-
-} 
+Assembler::Assembler(std::string fileName) : inputFile(fileName) {
+	// Changes file extension to .bin
+	this->outputFile = fileName.substr(0, fileName.find_last_of('.')) + ".bin";
+}
 
 Assembler::~Assembler() {
 
 }
 
-void Assembler::assemble(std::string fileName) {
+void Assembler::assemble() {
+	std::ifstream assemblyFile(this->inputFile);
+	std::ofstream binaryFile(this->outputFile);
+
 	std::cout << this->mnemonics.at("MM") << std::endl;
 }
