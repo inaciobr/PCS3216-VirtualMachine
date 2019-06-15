@@ -1,3 +1,9 @@
+/**
+* interface.cpp
+* PCS 3216 - Sistemas de Programação - 2019
+* Bruno Brandão Inácio
+*/
+
 #include "interface.hpp"
 #include "assembler.hpp"
 #include "virtualMachine.hpp"
@@ -5,25 +11,33 @@
 #include <iostream>
 #include <fstream>
 
-
+/**
+ * Inicia a interface.
+ */
 void Interface::start() {
-	std::cout << "Welcome!" << std::endl;
+	std::cout << "Bem vindo!" << std::endl;
 	this->menu();
+
+	return;
 }
 
+
+/**
+ * Cria o menu para o usuário.
+*/
 void Interface::menu() {
-	enum options { EXIT, ASSEMBLER, VIRTUALMACHINE };
 	int menu;
+	enum options { EXIT, ASSEMBLER, VIRTUALMACHINE };
 
 	while (true) {
 		std::cout << std::endl;
-		std::cout << EXIT << ". Exit" << std::endl;
+		std::cout << EXIT << ". Sair" << std::endl;
 		std::cout << ASSEMBLER << ". Assembler" << std::endl;
 		std::cout << VIRTUALMACHINE << ". Virtual Machine" << std::endl;
-		std::cout << "\nEnter the number of an option: ";
-		std::cin >> menu;
+		std::cout << "\nDigite o número da opção desejada: ";
 
-		switch (menu) {
+		/*
+		switch (std::cin >> menu; menu) {
 		case ASSEMBLER:
 			this->assemblerMenu();
 			break;
@@ -36,29 +50,21 @@ void Interface::menu() {
 		default:
 			return;
 		}
-	}
-}
-
-std::string Interface::inputFile() {
-	std::string fileName;
-
-	while (true) {
-		std::cout << "Enter the file name: ";
-		std::cin >> fileName;
-		std::cout << std::endl;
-
-		if (std::ifstream(fileName))
-			break;
-
-		std::cout << "File can't be opened." << std::endl;
+		*/
+		this->assemblerMenu();
+		break;
 	}
 
-	return fileName;
+	return;
 }
 
+
+/**
+ * Inicializa o assembler.
+ */
 void Interface::assemblerMenu() {
 	//std::string fileName = this->inputFile();
-	std::string fileName = "assembly/test.asm";
+	std::string fileName = "code/test.asm";
 
 	Assembler assembler(fileName);
 	assembler.assemble();
@@ -66,6 +72,10 @@ void Interface::assemblerMenu() {
 	return;
 }
 
+
+/**
+ * Inicializa a máquina virtual.
+ */
 void Interface::virtualMachineMenu() {
 	std::string fileName = this->inputFile();
 
@@ -74,4 +84,25 @@ void Interface::virtualMachineMenu() {
 	VM.run();
 
 	return;
+}
+
+
+/**
+ * Controla a entrada de um arquivo.
+ */
+std::string Interface::inputFile() {
+	std::string fileName;
+
+	while (true) {
+		std::cout << "Digite o nome do arquivo (dentro da pasta code): ";
+		std::cin >> fileName;
+		fileName = "code/" + fileName;
+
+		if (std::ifstream(fileName))
+			break;
+
+		std::cout << "\nO arquivo não pode ser aberto." << std::endl;
+	}
+
+	return fileName;
 }

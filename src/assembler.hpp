@@ -1,3 +1,9 @@
+/**
+* assembler.hpp
+* PCS 3216 - Sistemas de Programação - 2019
+* Bruno Brandão Inácio
+*/
+
 #pragma once
 
 #include <string>
@@ -10,10 +16,19 @@ public:
 	~Assembler();
 
 	void assemble();
-
-	static const std::map<const char*, unsigned int> mnemonics;
+	void dumpLabelTable();
 
 private:
+	void run(bool step);
+
 	std::string inputFile;
 	std::string outputFile;
+
+	struct instruction {
+		unsigned int code;
+		unsigned int size;
+	};
+
+	static const std::map<const char*, instruction> mnemonics;
+	std::map<std::string, unsigned int> labels;
 };
