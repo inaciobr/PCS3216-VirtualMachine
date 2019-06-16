@@ -9,28 +9,38 @@
 #include <string>
 #include <map>
 
+#include "label.hpp"
+
 
 class Assembler {
 public:
 	Assembler(std::string fileName);
 	~Assembler();
 
-	void assemble();
-
-	void dumpLabelTable();
-
-	void createListFile();
-	void addToListFile(unsigned line = 0, unsigned address = -1, unsigned code = 0xfc, std::string source = "");
-
+	std::string assemble();
 
 private:
 	void run(bool step);
 
+	void makeObject();
+	void createListFile();
+
+	Label labels;
+
+
+
+	struct listCode {
+		unsigned line = 0;
+		unsigned address = -1;
+		unsigned code = -1;
+		std::string source = "";
+	};
+
+	void addToListFile(listCode lst);
+
 
 	std::string inputFile;
 	std::string outputFile;
-
-	std::map<std::string, unsigned int> labels;
 
 
 	struct instruction {

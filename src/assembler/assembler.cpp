@@ -9,7 +9,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-
+#include <sstream>
 
 /**
  *  Tabela de mnemônicos.
@@ -35,53 +35,74 @@ const std::map<const char*, Assembler::instruction> Assembler::mnemonics = {
 
 
 /**
- *  
- */
+* TODO
+*/
 Assembler::Assembler(std::string fileName) {
 	this->inputFile = fileName;
 	this->outputFile = fileName.substr(0, fileName.find_last_of('.')) + ".bin";
-	
-	this->labels = {};
 }
 
 
 /**
- *
- */
+* TODO
+*/
 Assembler::~Assembler() {
 
 }
 
 
 /**
- *
- */
-void Assembler::assemble() {
-	this->labels.insert({"test", 10});
-
-	std::cout << this->mnemonics.at("MM").code << std::endl;
-	std::cout << this->labels.at("test") << std::endl;
+* TODO
+*/
+std::string Assembler::assemble() {
+	//this->createListFile();
 
 	this->run(0);
+	//this->run(1);
+	this->labels.define("AAA", 4124);
+	this->labels.waitFor("BBB");
+	this->labels.waitFor("AAA");
+	this->labels.waitFor("BBB");
+	this->labels.waitFor("CCC");
+	this->labels.define("CCC", 12);
+	//this->labels.checkIntegrity();
 
-	this->dumpLabelTable();
-	this->createListFile();
-	this->addToListFile();
-	return;
+	this->labels.dump(this->inputFile + ".labels");
+	//this->makeObject();
+
+	return this->outputFile;
 }
 
 
 /**
- *
- */
+* TODO
+*/
 void Assembler::run(bool step) {
 	std::ifstream assemblyFile(this->inputFile);
 
-	for (std::string line; std::getline(assemblyFile, line); ) {
-		// Retira comentários
-		std::string command = line.substr(0, line.find_last_of(';'));
+	unsigned i = 1;
+	for (std::string line; std::getline(assemblyFile, line); i++) {
+		if (line.empty())
+			continue;
 
-		std::cout << command << std::endl;
+		std::string command = line.substr(0, line.find_last_of(';'));
+		std::istringstream sline(command);
+
+		auto pos = command.find_first_not_of(" \t\n");
+		if (pos == 0 && !step) {
+			std::string label;
+			sline >> label;
+			this->labels.define(label , 10);
+			std::cout << label << std::endl;
+		} else if (pos == std::string::npos) {
+			if (!step)
+				this->addToListFile({ i, (unsigned)-1, (unsigned)-1, line });
+			continue;
+		} else {
+			
+		}
+
+		//std::cout << command << std::endl;
 	}
 
 	assemblyFile.close();
@@ -90,26 +111,7 @@ void Assembler::run(bool step) {
 
 
 /**
- * Salva a tabela de labels em um arquivo.
- */
-void Assembler::dumpLabelTable() {
-	std::ofstream labelsFile(this->inputFile + ".labels");
-
-	labelsFile << "=================================================" << std::endl;
-	labelsFile << this->inputFile << ".labels" << " LABEL TABLE FILE" << std::endl;
-	labelsFile << "=================================================" << std::endl;
-
-	labelsFile << std::left << std::setw(20) << "Label" << "Value" << std::endl;
-	for (const auto &x: this->labels)
-		labelsFile << std::left << std::setw(20) << x.first << x.second << std::endl;
-
-	labelsFile.close();
-	return;
-}
-
-
-/**
-*
+* TODO
 */
 void Assembler::createListFile() {
 	std::ofstream listFile(this->inputFile + ".lst");
@@ -127,30 +129,37 @@ void Assembler::createListFile() {
 
 
 /**
-*
+* TODO
 */
-void Assembler::addToListFile(unsigned line, unsigned address, unsigned code, std::string source) {
+void Assembler::addToListFile(Assembler::listCode lst) {
 	std::ofstream listFile(this->inputFile + ".lst", std::ios::app);
 
-	if (!line)
+	if (!lst.line)
 		listFile << std::setw(5) << "";
 	else
-		listFile << std::setw(5) << std::right << line;
+		listFile << std::setw(5) << std::right << lst.line;
 
-	if (address == -1)
+	if (lst.address == -1)
 		listFile << std::setw(10) << "";
 	else
-		listFile << std::setw(6) << "" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << address << std::setfill(' ');
+		listFile << std::setw(6) << "" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << lst.address << std::setfill(' ');
 
-	if (code == -1)
+	if (lst.code == -1)
 		listFile << std::setw(10) << "";
-	else if (code&0xff00)
-		listFile << std::setw(6) << "" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << code << std::setfill(' ');
+	else if (lst.code&0xff00)
+		listFile << std::setw(6) << "" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << lst.code << std::setfill(' ');
 	else
-		listFile << std::setw(8) << "" << std::setw(2) << std::setfill('0') << std::right << std::uppercase << std::hex << code << std::setfill(' ');
+		listFile << std::setw(8) << "" << std::setw(2) << std::setfill('0') << std::right << std::uppercase << std::hex << lst.code << std::setfill(' ');
 
-	listFile << std::setw(5) << "" << std::left << source << std::endl;
+	listFile << std::setw(5) << "" << std::left << lst.source << std::endl;
 
 	listFile.close();
 	return;
+}
+
+/**
+* TODO
+*/
+void Assembler::makeObject() {
+
 }

@@ -5,7 +5,7 @@
 */
 
 #include "interface.hpp"
-#include "assembler.hpp"
+#include "assembler/assembler.hpp"
 #include "virtualMachine.hpp"
 
 #include <iostream>
@@ -67,8 +67,17 @@ void Interface::assemblerMenu() {
 	std::string fileName = "code/test.asm";
 
 	Assembler assembler(fileName);
-	assembler.assemble();
+	std::string binFile;
 
+	try {
+		binFile = assembler.assemble();
+	}
+	catch (std::string e) {
+		std::cout << e << std::endl;
+		return;
+	}
+
+	std::cout << "\nO código foi montado no arquivo " << binFile << " com sucesso." << std::endl;
 	return;
 }
 
