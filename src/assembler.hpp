@@ -16,13 +16,22 @@ public:
 	~Assembler();
 
 	void assemble();
+
 	void dumpLabelTable();
+
+	void createListFile();
+	void addToListFile(unsigned line = 0, unsigned address = -1, unsigned code = 0xfc, std::string source = "");
+
 
 private:
 	void run(bool step);
 
+
 	std::string inputFile;
 	std::string outputFile;
+
+	std::map<std::string, unsigned int> labels;
+
 
 	struct instruction {
 		unsigned int code;
@@ -30,5 +39,4 @@ private:
 	};
 
 	static const std::map<const char*, instruction> mnemonics;
-	std::map<std::string, unsigned int> labels;
 };

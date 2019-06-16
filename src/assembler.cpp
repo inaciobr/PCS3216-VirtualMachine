@@ -60,12 +60,13 @@ void Assembler::assemble() {
 	this->labels.insert({"test", 10});
 
 	std::cout << this->mnemonics.at("MM").code << std::endl;
-	std::cout << this->mnemonics.at("MM").size << std::endl;
 	std::cout << this->labels.at("test") << std::endl;
 
 	this->run(0);
 
 	this->dumpLabelTable();
+	this->createListFile();
+	this->addToListFile();
 	return;
 }
 
@@ -77,10 +78,9 @@ void Assembler::run(bool step) {
 	std::ifstream assemblyFile(this->inputFile);
 
 	for (std::string line; std::getline(assemblyFile, line); ) {
-		std::cout << line << std::endl;
-
 		// Retira comentários
 		std::string command = line.substr(0, line.find_last_of(';'));
+
 		std::cout << command << std::endl;
 	}
 
@@ -90,7 +90,7 @@ void Assembler::run(bool step) {
 
 
 /**
- *
+ * Salva a tabela de labels em um arquivo.
  */
 void Assembler::dumpLabelTable() {
 	std::ofstream labelsFile(this->inputFile + ".labels");
@@ -98,11 +98,59 @@ void Assembler::dumpLabelTable() {
 	labelsFile << "=================================================" << std::endl;
 	labelsFile << this->inputFile << ".labels" << " LABEL TABLE FILE" << std::endl;
 	labelsFile << "=================================================" << std::endl;
-	labelsFile << std::left << std::setw(25) << "Label" << std::setw(25) << "Value" << std::endl;
-	
-	for (auto const &x: this->labels)
-		labelsFile << std::left << std::setw(25) << x.first << std::setw(25) << x.second << std::endl;
+
+	labelsFile << std::left << std::setw(20) << "Label" << "Value" << std::endl;
+	for (const auto &x: this->labels)
+		labelsFile << std::left << std::setw(20) << x.first << x.second << std::endl;
 
 	labelsFile.close();
+	return;
+}
+
+
+/**
+*
+*/
+void Assembler::createListFile() {
+	std::ofstream listFile(this->inputFile + ".lst");
+
+	listFile << "=================================================" << std::endl;
+	listFile << this->inputFile << ".lst" << " LIST FILE" << std::endl;
+	listFile << "=================================================" << std::endl;
+
+	listFile << std::right << std::setw(5) << "LINE" << std::setw(10) << "ADDRESS"
+		     << std::setw(10) << "CODE" << std::setw(5) << "" << std::left << "SOURCE" << std::endl;
+
+	listFile.close();
+	return;
+}
+
+
+/**
+*
+*/
+void Assembler::addToListFile(unsigned line, unsigned address, unsigned code, std::string source) {
+	std::ofstream listFile(this->inputFile + ".lst", std::ios::app);
+
+	if (!line)
+		listFile << std::setw(5) << "";
+	else
+		listFile << std::setw(5) << std::right << line;
+
+	if (address == -1)
+		listFile << std::setw(10) << "";
+	else
+		listFile << std::setw(6) << "" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << address << std::setfill(' ');
+
+	if (code == -1)
+		listFile << std::setw(10) << "";
+	else if (code&0xff00)
+		listFile << std::setw(6) << "" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << code << std::setfill(' ');
+	else
+		listFile << std::setw(8) << "" << std::setw(2) << std::setfill('0') << std::right << std::uppercase << std::hex << code << std::setfill(' ');
+
+	listFile << std::setw(5) << "" << std::left << source << std::endl;
+
+	listFile.close();
 	return;
 }
