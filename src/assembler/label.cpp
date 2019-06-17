@@ -31,7 +31,7 @@ Label::~Label() {
  *
  */
 void Label::define(std::string label, unsigned address) {
-	label = label.substr(0, label.find_last_of(':'));
+	label = label.substr(0, label.find_last_of(":+-/*"));
 
 	for (const auto& m : Assembler::mnemonics) {
 		if (label == m.first)
@@ -59,6 +59,14 @@ void Label::waitFor(std::string label) {
 
 
 /**
+ *
+ */
+unsigned Label::getValue(std::string label) {
+	return this->labels.at(label);
+}
+
+
+/**
  * Salva a tabela de labels em um arquivo.
  */
 void Label::dump(std::string fileName) {
@@ -71,7 +79,7 @@ void Label::dump(std::string fileName) {
 	labelsFile << std::left << std::setw(20) << "Label" << "Value" << std::endl;
 	for (const auto& l : this->labels) {
 		labelsFile << std::left << std::setw(20) << l.first
-			<< "0x" << std::setw(4) << std::right << std::setfill('0') << std::uppercase << std::hex << l.second
+			<< "0x" << std::setw(4) << std::right << std::setfill('0') << std::uppercase << std::hex << (l.second & 0xFFFF)
 			<< std::setfill(' ') << std::endl;
 	}
 

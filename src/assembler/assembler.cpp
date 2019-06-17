@@ -57,8 +57,8 @@ Assembler::~Assembler() {
 std::string Assembler::assemble() {
 	//this->createListFile();
 
-	//this->runStep(1);
-	this->labels.checkIntegrity();
+	this->runStep(0);
+	//this->labels.checkIntegrity();
 	this->runStep(1);
 
 	this->labels.dump(this->inputFile + ".labels");
@@ -119,6 +119,16 @@ void Assembler::runStep(bool step) {
 		if (!operand.length())
 			throw "\n" + std::to_string(lineNumber) + ": operando não definido.";
 
+		// Obtém o valor do operando e valida as labels.
+		int operandValue;
+		try {
+			operandValue = this->operandValue(operand, step);
+		}
+		catch (std::string e) {
+			throw "\n" + std::to_string(lineNumber) + ": " + e;
+		}
+
+
 
 
 
@@ -141,17 +151,19 @@ void Assembler::runStep(bool step) {
 		else {
 			try {
 				auto opr = Assembler::mnemonics.at(mnemonic);
+
+				if (step)
+					this->list.insert({ lineNumber, instructionCounter, code, line });
+
 				instructionCounter += opr.size;
 			}
 			catch (const std::out_of_range) {
+				continue;
 				throw "\n" + std::to_string(lineNumber) + ": O mnemônico " + mnemonic + " não foi reconhecido.";
 			}
 		}
 
-		// VERIFICA OPERANDO
 
-		if (step)
-			this->list.insert({ lineNumber, instructionCounter, code, line });
 	}
 
 	assemblyFile.close();
@@ -159,8 +171,54 @@ void Assembler::runStep(bool step) {
 }
 
 
-void Assembler::operandLabel(std::string) {
+int Assembler::operandValue(std::string operand, bool step) {
+	// Imediatos
+	if (operand[0] == '/') {
+		return std::stoi(operand.substr(1, std::string::npos), nullptr, 16);
+	}
+	else if (operand[0] == '\'') {
+		return static_cast<unsigned>(operand[1]);
+	}
+	else if (operand.find_first_not_of("+-0123456789") == std::string::npos) {
+		return std::stoi(operand);
+	}
 
+	// Labels
+	std::string::size_type posOper = operand.find_last_of("+-/*");
+	std::string label = operand.substr(0, posOper);
+
+	if (!step) {
+		this->labels.waitFor(label);
+		return 0;
+	}
+
+	int value = this->labels.getValue(label);
+
+	if (posOper == std::string::npos)
+		return value;
+
+	switch (operand[posOper]) {
+	case '+':
+		value += std::stoi(operand.substr(posOper + 1));
+		break;
+
+	case '-':
+		value -= std::stoi(operand.substr(posOper + 1));
+		break;
+
+	case '*':
+		value *= std::stoi(operand.substr(posOper + 1));
+		break;
+
+	case '/':
+		value /= std::stoi(operand.substr(posOper + 1));
+		break;
+
+	default:
+		throw "O caractere \'" + std::to_string(operand[posOper]) + "\' não foi reconhecido.";
+	}
+
+	return value;
 }
 
 
