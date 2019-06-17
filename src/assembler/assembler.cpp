@@ -14,7 +14,7 @@
 /**
  *  Tabela de mnemônicos.
  */
-const std::map<const char*, Assembler::instruction> Assembler::mnemonics = {
+const std::map<std::string, Assembler::Instruction> Assembler::mnemonics = {
 	{"JP", {0x0, 2}},		// Jump (UNCONDITIONAL)
 	{"JZ", {0x1, 2}},		// Jump if zero
 	{"JN", {0x2, 2}},		// Jump if negative
@@ -57,15 +57,9 @@ Assembler::~Assembler() {
 std::string Assembler::assemble() {
 	//this->createListFile();
 
-	this->run(0);
-	//this->run(1);
-	this->labels.define("AAA", 4124);
-	this->labels.waitFor("BBB");
-	this->labels.waitFor("AAA");
-	this->labels.waitFor("BBB");
-	this->labels.waitFor("CCC");
-	this->labels.define("CCC", 12);
-	//this->labels.checkIntegrity();
+	this->runStep(0);
+	this->labels.checkIntegrity();
+	//this->runStep(1);
 
 	this->labels.dump(this->inputFile + ".labels");
 	//this->makeObject();
@@ -77,85 +71,65 @@ std::string Assembler::assemble() {
 /**
 * TODO
 */
-void Assembler::run(bool step) {
+void Assembler::runStep(bool step) {
 	std::ifstream assemblyFile(this->inputFile);
+	unsigned instructionCounter = 0;
+	unsigned lineNumber = 0;
 
-	unsigned i = 1;
-	for (std::string line; std::getline(assemblyFile, line); i++) {
-		if (line.empty())
-			continue;
-
+	for (std::string line; std::getline(assemblyFile, line); ) {
 		std::string command = line.substr(0, line.find_last_of(';'));
-		std::istringstream sline(command);
-
 		auto pos = command.find_first_not_of(" \t\n");
-		if (pos == 0 && !step) {
-			std::string label;
-			sline >> label;
-			this->labels.define(label , 10);
-			std::cout << label << std::endl;
-		} else if (pos == std::string::npos) {
-			if (!step)
-				this->addToListFile({ i, (unsigned)-1, (unsigned)-1, line });
+		lineNumber++;
+
+		// Linha sem comando.
+		if (pos == std::string::npos) {
+			if (step)
+				this->list.addToList({ lineNumber, ListCode::UNDEFINED, ListCode::UNDEFINED, line });
+
 			continue;
-		} else {
-			
 		}
 
-		//std::cout << command << std::endl;
+		// Leitura dos commandos.
+		std::istringstream sline(line);
+		std::string label, mnemonic, operand;
+
+		// Definição de label.
+		if (pos == 0) { 
+			sline >> label;
+
+			if (!step)
+				this->labels.define(label, instructionCounter);
+		}
+
+		sline >> mnemonic >> operand;
+
+		if (!mnemonic.length())
+			continue;
+
+		if (!operand.length())
+			throw "\n" + std::to_string(lineNumber) + ": operando não definido.";
+
+		// Instruções e pseudo-instruções.
+		// ======
+		// VERIFICAR PSEUDO
+		try {
+			auto opr = Assembler::mnemonics.at(mnemonic);
+			instructionCounter += opr.size;
+		}
+		catch (const std::out_of_range& oor) {
+			throw "\n" + std::to_string(lineNumber) + ": O mnemônico " + mnemonic + " não foi reconhecido.";
+		}
+
+		// VERIFICA OPERANDO
+
+
 	}
 
 	assemblyFile.close();
+
 	return;
 }
 
-
-/**
-* TODO
-*/
-void Assembler::createListFile() {
-	std::ofstream listFile(this->inputFile + ".lst");
-
-	listFile << "=================================================" << std::endl;
-	listFile << this->inputFile << ".lst" << " LIST FILE" << std::endl;
-	listFile << "=================================================" << std::endl;
-
-	listFile << std::right << std::setw(5) << "LINE" << std::setw(10) << "ADDRESS"
-		     << std::setw(10) << "CODE" << std::setw(5) << "" << std::left << "SOURCE" << std::endl;
-
-	listFile.close();
-	return;
-}
-
-
-/**
-* TODO
-*/
-void Assembler::addToListFile(Assembler::listCode lst) {
-	std::ofstream listFile(this->inputFile + ".lst", std::ios::app);
-
-	if (!lst.line)
-		listFile << std::setw(5) << "";
-	else
-		listFile << std::setw(5) << std::right << lst.line;
-
-	if (lst.address == -1)
-		listFile << std::setw(10) << "";
-	else
-		listFile << std::setw(6) << "" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << lst.address << std::setfill(' ');
-
-	if (lst.code == -1)
-		listFile << std::setw(10) << "";
-	else if (lst.code&0xff00)
-		listFile << std::setw(6) << "" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << lst.code << std::setfill(' ');
-	else
-		listFile << std::setw(8) << "" << std::setw(2) << std::setfill('0') << std::right << std::uppercase << std::hex << lst.code << std::setfill(' ');
-
-	listFile << std::setw(5) << "" << std::left << lst.source << std::endl;
-
-	listFile.close();
-	return;
-}
 
 /**
 * TODO

@@ -20,8 +20,8 @@ public:
 	void dump(std::string fileName);
 	void checkIntegrity();
 
+	static const unsigned UNDEFINED = -1;
+
 private:
 	std::unordered_map<std::string, unsigned int> labels;
-
-	static const unsigned UNDEFINED = -1;
 };

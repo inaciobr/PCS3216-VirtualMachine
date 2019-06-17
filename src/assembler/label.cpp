@@ -5,6 +5,7 @@
 */
 
 #include "label.hpp"
+#include "assembler.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -30,11 +31,18 @@ Label::~Label() {
  *
  */
 void Label::define(std::string label, unsigned address) {
+	label = label.substr(0, label.find_last_of(':'));
+
+	for (const auto& m : Assembler::mnemonics) {
+		if (label == m.first)
+			throw label + " não pode ser utilizado como uma label pois é um mnemônico de uma instrução.";
+	}
+
 	if (!this->labels.count(label) || this->labels.at(label) == UNDEFINED) {
 		this->labels[label] = address;
 	}
 	else {
-		throw "A label " + label + " já foi inserida anteriormente.";
+		throw "A label " + label + " foi definida mais de uma vez.";
 	}
 
 	return;
@@ -63,7 +71,7 @@ void Label::dump(std::string fileName) {
 	labelsFile << std::left << std::setw(20) << "Label" << "Value" << std::endl;
 	for (const auto& l : this->labels) {
 		labelsFile << std::left << std::setw(20) << l.first
-			<< "0x" << std::setw(8) << std::right << std::setfill('0') << std::uppercase << std::hex << l.second
+			<< "0x" << std::setw(4) << std::right << std::setfill('0') << std::uppercase << std::hex << l.second
 			<< std::setfill(' ') << std::endl;
 	}
 

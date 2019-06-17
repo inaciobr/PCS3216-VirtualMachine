@@ -10,6 +10,7 @@
 #include <map>
 
 #include "label.hpp"
+#include "ListCode.hpp"
 
 
 class Assembler {
@@ -19,34 +20,20 @@ public:
 
 	std::string assemble();
 
-private:
-	void run(bool step);
-
-	void makeObject();
-	void createListFile();
-
-	Label labels;
-
-
-
-	struct listCode {
-		unsigned line = 0;
-		unsigned address = -1;
-		unsigned code = -1;
-		std::string source = "";
-	};
-
-	void addToListFile(listCode lst);
-
-
-	std::string inputFile;
-	std::string outputFile;
-
-
-	struct instruction {
+	struct Instruction {
 		unsigned int code;
 		unsigned int size;
 	};
 
-	static const std::map<const char*, instruction> mnemonics;
+	static const std::map<std::string, Instruction> mnemonics;
+
+private:
+	void runStep(bool step);
+	void makeObject();
+
+	Label labels;
+	ListCode list;
+
+	std::string inputFile;
+	std::string outputFile;
 };

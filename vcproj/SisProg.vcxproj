@@ -126,12 +126,14 @@
   <ItemGroup>
     <ClInclude Include="..\src\assembler\assembler.hpp" />
     <ClInclude Include="..\src\assembler\label.hpp" />
+    <ClInclude Include="..\src\assembler\listFile.hpp" />
     <ClInclude Include="..\src\interface.hpp" />
     <ClInclude Include="..\src\virtualMachine.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\assembler\assembler.cpp" />
     <ClCompile Include="..\src\assembler\label.cpp" />
+    <ClCompile Include="..\src\assembler\listFile.cpp" />
     <ClCompile Include="..\src\interface.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\virtualMachine.cpp" />
