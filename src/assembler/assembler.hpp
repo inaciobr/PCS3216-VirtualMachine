@@ -41,4 +41,6 @@ private:
 
 	std::string inputFile;
 	std::string outputFile;
+
+	std::vector<uint8_t> code;
 };

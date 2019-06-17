@@ -122,9 +122,7 @@ void Assembler::runStep(bool step) {
 
 
 
-
-		unsigned code = 0;
-
+		uint16_t code = 0xfebc;
 		// Instruções e pseudo-instruções.
 		// ======
 		// VERIFICAR PSEUDO

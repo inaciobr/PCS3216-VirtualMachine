@@ -14,19 +14,24 @@ public:
 	ListCode();
 	~ListCode();
 
-	struct Code {
-		unsigned line;
+	struct Line {
+		unsigned lineNumber;
 		unsigned address;
-		unsigned code;
+
+		union {
+			unsigned value;
+			std::uint8_t byte[2];
+		} code;
+
 		std::string source;
 	};
 
-	void insert(Code cd);
+	void insert(Line cd);
 	void dump(std::string fileName);
 
 	static const unsigned UNDEFINED = -1;
 
 private:
 
-	std::vector<Code> lst;
+	std::vector<Line> lst;
 };

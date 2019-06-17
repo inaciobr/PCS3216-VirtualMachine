@@ -24,7 +24,6 @@ void VirtualMachine::run() {
 
 
 // INSTRUCTIONS
-
 /*
 *
 */

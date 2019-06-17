@@ -29,7 +29,7 @@ ListCode::~ListCode() {
 /**
  *
  */
-void ListCode::insert(Code cd) {
+void ListCode::insert(Line cd) {
 	this->lst.push_back(cd);
 
 	return;
@@ -49,25 +49,25 @@ void ListCode::dump(std::string fileName) {
 	listFile << std::right << std::setw(5) << "LINE" << std::setw(10) << "ADDRESS"
 		<< std::setw(10) << "CODE" << std::setw(5) << "" << std::left << "SOURCE" << std::endl;
 
-	for (const auto& code : this->lst) {
-		if (code.line == UNDEFINED)
+	for (const auto& l : this->lst) {
+		if (l.lineNumber == UNDEFINED)
 			listFile << std::setw(5) << "";
 		else
-			listFile << std::setw(5) << std::right << code.line;
+			listFile << std::setw(5) << std::right << l.lineNumber;
 
-		if (code.address == UNDEFINED)
+		if (l.address == UNDEFINED)
 			listFile << std::setw(10) << "";
 		else
-			listFile << std::setw(6) << "0x" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << code.address << std::dec << std::setfill(' ');
+			listFile << std::setw(6) << "0x" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << l.address << std::dec << std::setfill(' ');
 
-		if (code.code == UNDEFINED)
+		if (l.code.value == UNDEFINED)
 			listFile << std::setw(10) << "";
-		else if (code.code & 0xff00)
-			listFile << std::setw(6) << "" << std::setw(4) << std::setfill('0') << std::right << std::uppercase << std::hex << code.code << std::dec << std::setfill(' ');
+		else if (l.code.byte[1])
+			listFile << std::setw(6) << "" << std::setfill('0') << std::right << std::uppercase << std::hex << std::setw(2) << static_cast<unsigned>(l.code.byte[1]) << " " << std::setw(2) << static_cast<unsigned>(l.code.byte[0]) << std::dec << std::setfill(' ');
 		else
-			listFile << std::setw(8) << "" << std::setw(2) << std::setfill('0') << std::right << std::uppercase << std::hex << code.code << std::dec << std::setfill(' ');
+			listFile << std::setw(9) << "" << std::setfill('0') << std::right << std::uppercase << std::hex << std::setw(2) << static_cast<unsigned>(l.code.byte[0]) << std::dec << std::setfill(' ');
 
-		listFile << std::setw(5) << "" << std::left << code.source << std::endl;
+		listFile << std::setw(5) << "" << std::left << l.source << std::endl;
 	}
 
 	listFile.close();
