@@ -5,8 +5,8 @@
 */
 
 #include "interface.hpp"
-#include "assembler/assembler.hpp"
-#include "virtualMachine.hpp"
+#include "../assembler/assembler.hpp"
+#include "../virtualMachine/virtualMachine.hpp"
 
 #include <iostream>
 #include <fstream>

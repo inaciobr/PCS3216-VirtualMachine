@@ -3,7 +3,7 @@ LOOP    CN  /2        ; Activate Indirect Mode
         LD  INICIO    ; Indirect load from current address
 
         IO  /4        ; Put Data, device = 0
-					  ; HAHA
+                      ; HAHA
         LD  SPACE
         IO  /4        ; Put Space
     

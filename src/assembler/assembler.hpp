@@ -8,6 +8,7 @@
 
 #include <string>
 #include <map>
+#include <functional>
 
 #include "label.hpp"
 #include "ListCode.hpp"
@@ -23,13 +24,17 @@ public:
 	struct Instruction {
 		unsigned int code;
 		unsigned int size;
+		unsigned int mask;
 	};
 
 	static const std::map<std::string, Instruction> mnemonics;
+	static const std::map<std::string, Instruction> pseudo;
 
 private:
 	void runStep(bool step);
 	void makeObject();
+
+	void operandLabel(std::string);
 
 	Label labels;
 	ListCode list;
