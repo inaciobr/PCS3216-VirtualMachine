@@ -50,7 +50,7 @@ void Label::define(std::string label, unsigned address) {
 
 
 /**
- *
+ * Adiciona label como UNDEFINED apenas se já não tiver sido definida.
  */
 void Label::waitFor(std::string label) {
 	this->labels.insert({ label, UNDEFINED });

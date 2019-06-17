@@ -15,6 +15,7 @@
  *  Tabela de mnemônicos.
  */
 const std::map<std::string, Assembler::Instruction> Assembler::mnemonics = {
+	// Instruções
 	{ "JP",	{ 0x0000,	2,	0x0FFF	} },	// Jump (UNCONDITIONAL)
 	{ "JZ",	{ 0x1000,	2,	0x0FFF	} },	// Jump if zero
 	{ "JN",	{ 0x2000,	2,	0x0FFF	} },	// Jump if negative
@@ -27,10 +28,17 @@ const std::map<std::string, Assembler::Instruction> Assembler::mnemonics = {
 	{ "MM",	{ 0x9000,	2,	0x0FFF	} },	// Move to memory
 	{ "SC",	{ 0xA000,	2,	0x0FFF	} },	// Subroutine call
 	{ "OS",	{ 0xB0,		1,	0x0F	} },	// Operating system call
-	{ "IO",	{ 0xC0,		1,	0x0F	} }		// Input/Output
+	{ "IO",	{ 0xC0,		1,	0x0F	} },	// Input/Output
 	//{ ??,	{ 0xD,		1,	0x0F	} },	// Free
 	//{ ??,	{ 0xE,		1,	0x0F	} },	// Free
-	//{ ??,	{ 0xF,		1,	0x0F	} }		// Free
+	//{ ??,	{ 0xF,		1,	0x0F	} },		// Free
+
+	// Pseudo-Instruções
+	{ "K",	{ 0xFF,		1,	0xFF	} },	// DB
+	{ "$",	{ 0x00,		0,	0x00	} },	// BLOC
+	{ "@",	{ 0xFFFF,	0,	0xFFFF	} },	// ORG
+
+	{ "#",	{ 0xFFFF,	2,	0xFFFF	} },	// END
 };
 
 
@@ -115,10 +123,6 @@ void Assembler::runStep(bool step) {
 			continue;
 		}
 
-		// Verifica se o operando está definido (todas as operações possuem um operando).
-		if (!operand.length())
-			throw "\n" + std::to_string(lineNumber) + ": operando não definido.";
-
 		// Obtém o valor do operando e valida as labels.
 		int operandValue;
 		try {
@@ -128,39 +132,30 @@ void Assembler::runStep(bool step) {
 			throw "\n" + std::to_string(lineNumber) + ": " + e;
 		}
 
+		// Trata instruções e pseudo instruções.
+		try {
+			auto instruction = Assembler::mnemonics.at(mnemonic);
 
-
-
-
-		uint16_t code = 0xfebc;
-		// Instruções e pseudo-instruções.
-		// ======
-		// VERIFICAR PSEUDO
-		if (operand == "@") {
-
-		}
-		else if (operand == "#") {
-
-		}
-		else if (operand == "K") {
-
-		}
-		else if (operand == "$") {
-
-		}
-		else {
-			try {
-				auto opr = Assembler::mnemonics.at(mnemonic);
-
-				if (step)
-					this->list.insert({ lineNumber, instructionCounter, code, line });
-
-				instructionCounter += opr.size;
+			// Trata pseudo-instruções.
+			if (mnemonic == "$") {
+				instructionCounter += operandValue;
 			}
-			catch (const std::out_of_range) {
-				continue;
-				throw "\n" + std::to_string(lineNumber) + ": O mnemônico " + mnemonic + " não foi reconhecido.";
+			else if (operand == "@") {
+				instructionCounter = operandValue;
 			}
+			else if (operand == "#") {
+
+			}
+
+			if (step) {
+				uint16_t code = instruction.code + (operandValue & instruction.mask);
+				this->list.insert({ lineNumber, instructionCounter, code, line });
+			}
+
+			instructionCounter += instruction.size;
+		}
+		catch (const std::out_of_range) {
+			throw "\n" + std::to_string(lineNumber) + ": O mnemônico " + mnemonic + " não foi reconhecido.";
 		}
 
 
@@ -175,9 +170,13 @@ void Assembler::runStep(bool step) {
 * 
 */
 int Assembler::operandValue(std::string operand, bool step) {
+	// Verifica se o operando está definido (todas as operações possuem um operando).
+	if (!operand.length())
+		throw "Operando não definido.";
+
 	// Imediatos
 	if (operand[0] == '/') {
-		return std::stoi(operand.substr(1, std::string::npos), nullptr, 16);
+		return std::stoi(operand.substr(1), nullptr, 16);
 	}
 	else if (operand[0] == '\'') {
 		return static_cast<unsigned>(operand[1]);
@@ -187,38 +186,51 @@ int Assembler::operandValue(std::string operand, bool step) {
 	}
 
 	// Labels
-	std::string::size_type posOper = operand.find_last_of("+-/*");
-	std::string label = operand.substr(0, posOper);
+	std::string::size_type posOperation = operand.find_first_of("+-/*");
+	std::string label = operand.substr(0, posOperation);
 
+	// Primeiro passo adiciona a label à lista de labels não definidas.
 	if (!step) {
 		this->labels.waitFor(label);
 		return 0;
 	}
 
+	// Obtém o valor da label.
 	int value = this->labels.getValue(label);
 
-	if (posOper == std::string::npos)
+	// Caso não haja nenhuma operação em cima da label, retorna o valor dela.
+	if (posOperation == std::string::npos)
 		return value;
 
-	switch (operand[posOper]) {
+	// Caso haja alguma operação em cima da label, obtém o valor do segundo termo.
+	std::string::size_type posEnd;
+	std::string secTerm = operand.substr(posOperation + 1);
+	int secTermValue = std::stoi(secTerm, &posEnd);
+
+	// Se ouver algum caractere não reconhecido no segundo termo, acusa erro.
+	if (secTerm.size() != posEnd)
+		throw "Os caracteres \'" + secTerm.substr(posEnd) + "\' não foram reconhecidos.";
+
+	// Calcula o valor resultante da operação em cima da label.
+	switch (operand[posOperation]) {
 	case '+':
-		value += std::stoi(operand.substr(posOper + 1));
+		value += secTermValue;
 		break;
 
 	case '-':
-		value -= std::stoi(operand.substr(posOper + 1));
+		value -= secTermValue;
 		break;
 
 	case '*':
-		value *= std::stoi(operand.substr(posOper + 1));
+		value *= secTermValue;
 		break;
 
 	case '/':
-		value /= std::stoi(operand.substr(posOper + 1));
+		value /= secTermValue;
 		break;
 
 	default:
-		throw "O caractere \'" + std::to_string(operand[posOper]) + "\' não foi reconhecido.";
+		throw "O caractere \'" + std::to_string(operand[posOperation]) + "\' não foi reconhecido.";
 	}
 
 	return value;
