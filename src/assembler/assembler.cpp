@@ -15,22 +15,22 @@
  *  Tabela de mnemônicos.
  */
 const std::map<std::string, Assembler::Instruction> Assembler::mnemonics = {
-	{"JP",	{0x0000,	2,	0x0FFF	}},	// Jump (UNCONDITIONAL)
-	{"JZ",	{0x1000, 2,	0x0FFF	}},	// Jump if zero
-	{"JN",	{0x2000, 2,	0x0FFF	}},	// Jump if negative
-	{"CN",	{0x30,	1,	0x0F	}},	// Control
-	{ "+",	{0x4000, 2,	0x0FFF	}},	// Add
-	{ "-",	{0x5000, 2,	0x0FFF	}},	// Subtract
-	{ "*",	{0x6000, 2,	0x0FFF	}},	// Multiply
-	{ "/",	{0x7000, 2,	0x0FFF	}},	// Divide
-	{"LD",	{0x8000, 2,	0x0FFF	}},	// Load from memory
-	{"MM",	{0x9000, 2,	0x0FFF	}},	// Move to memory
-	{"SC",	{0xA000, 2,	0x0FFF	}},	// Subroutine call
-	{"OS",	{0xB0,	1,	0x0F	}},	// Operating system call
-	{"IO",	{0xC0,	1,	0x0F	}}	// Input/Output
-	//{??,	{0xD,	1,	0x0F	}},	// Free
-	//{??,	{0xE,	1,	0x0F	}},	// Free
-	//{??,	{0xF,	1,	0x0F	}}	// Free
+	{ "JP",	{ 0x0000,	2,	0x0FFF	} },	// Jump (UNCONDITIONAL)
+	{ "JZ",	{ 0x1000,	2,	0x0FFF	} },	// Jump if zero
+	{ "JN",	{ 0x2000,	2,	0x0FFF	} },	// Jump if negative
+	{ "CN",	{ 0x30,		1,	0x0F	} },	// Control
+	{  "+",	{ 0x4000,	2,	0x0FFF	} },	// Add
+	{  "-",	{ 0x5000,	2,	0x0FFF	} },	// Subtract
+	{  "*",	{ 0x6000,	2,	0x0FFF	} },	// Multiply
+	{  "/",	{ 0x7000,	2,	0x0FFF	} },	// Divide
+	{ "LD",	{ 0x8000,	2,	0x0FFF	} },	// Load from memory
+	{ "MM",	{ 0x9000,	2,	0x0FFF	} },	// Move to memory
+	{ "SC",	{ 0xA000,	2,	0x0FFF	} },	// Subroutine call
+	{ "OS",	{ 0xB0,		1,	0x0F	} },	// Operating system call
+	{ "IO",	{ 0xC0,		1,	0x0F	} }		// Input/Output
+	//{ ??,	{ 0xD,		1,	0x0F	} },	// Free
+	//{ ??,	{ 0xE,		1,	0x0F	} },	// Free
+	//{ ??,	{ 0xF,		1,	0x0F	} }		// Free
 };
 
 
@@ -171,6 +171,9 @@ void Assembler::runStep(bool step) {
 }
 
 
+/**
+* 
+*/
 int Assembler::operandValue(std::string operand, bool step) {
 	// Imediatos
 	if (operand[0] == '/') {
@@ -220,7 +223,6 @@ int Assembler::operandValue(std::string operand, bool step) {
 
 	return value;
 }
-
 
 
 /**
