@@ -16,20 +16,19 @@ public:
 
 	struct Line {
 		unsigned lineNumber;
+		std::string source;
+
+		unsigned sizeCode;
 		unsigned address;
 
 		union {
 			unsigned value;
 			std::uint8_t byte[2];
 		} code;
-
-		std::string source;
 	};
 
 	void insert(Line cd);
 	void dump(std::string fileName);
-
-	static const unsigned UNDEFINED = -1;
 
 private:
 

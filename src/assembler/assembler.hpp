@@ -34,7 +34,7 @@ private:
 	void runStep(bool step);
 	void makeObject();
 
-	int operandValue(std::string, bool step);
+	int operandValue(std::string, bool step, bool allowLabel = true);
 
 	Label labels;
 	ListCode list;

@@ -31,14 +31,13 @@ const std::map<std::string, Assembler::Instruction> Assembler::mnemonics = {
 	{ "IO",	{ 0xC0,		1,	0x0F	} },	// Input/Output
 	//{ ??,	{ 0xD,		1,	0x0F	} },	// Free
 	//{ ??,	{ 0xE,		1,	0x0F	} },	// Free
-	//{ ??,	{ 0xF,		1,	0x0F	} },		// Free
+	//{ ??,	{ 0xF,		1,	0x0F	} },	// Free
 
 	// Pseudo-Instruções
-	{ "K",	{ 0xFF,		1,	0xFF	} },	// DB
+	{ "K",	{ 0x00,		1,	0xFF	} },	// DB
 	{ "$",	{ 0x00,		0,	0x00	} },	// BLOC
-	{ "@",	{ 0xFFFF,	0,	0xFFFF	} },	// ORG
-
-	{ "#",	{ 0xFFFF,	2,	0xFFFF	} },	// END
+	{ "@",	{ 0x0000,	0,	0xFFFF	} },	// ORG
+	{ "#",	{ 0xFFFF,	0,	0xFFFF	} },	// END
 };
 
 
@@ -55,7 +54,6 @@ Assembler::Assembler(std::string fileName) {
 * TODO
 */
 Assembler::~Assembler() {
-
 }
 
 
@@ -63,8 +61,6 @@ Assembler::~Assembler() {
 * TODO
 */
 std::string Assembler::assemble() {
-	//this->createListFile();
-
 	this->runStep(0);
 	//this->labels.checkIntegrity();
 	this->runStep(1);
@@ -73,6 +69,7 @@ std::string Assembler::assemble() {
 	this->list.dump(this->inputFile + ".lst");
 
 	//this->makeObject();
+	//this->makeBin();
 
 	return this->outputFile;
 }
@@ -95,7 +92,7 @@ void Assembler::runStep(bool step) {
 		// Linha sem comando.
 		if (pos == std::string::npos) {
 			if (step)
-				this->list.insert({ lineNumber, ListCode::UNDEFINED, ListCode::UNDEFINED, line });
+				this->list.insert({ lineNumber, line, 0 });
 
 			continue;
 		}
@@ -118,22 +115,18 @@ void Assembler::runStep(bool step) {
 		// Linha contém apenas a definição de uma label.
 		if (!mnemonic.length()) {
 			if (step)
-				this->list.insert({ lineNumber, ListCode::UNDEFINED, ListCode::UNDEFINED, line });
+				this->list.insert({ lineNumber, line, 0 });
 
 			continue;
 		}
 
-		// Obtém o valor do operando e valida as labels.
-		int operandValue;
 		try {
-			operandValue = this->operandValue(operand, step);
-		}
-		catch (std::string e) {
-			throw "\n" + std::to_string(lineNumber) + ": " + e;
-		}
+			// Obtém o valor do operando e valida as labels.
+			int operandValue = this->operandValue(operand, step);
 
-		// Trata instruções e pseudo instruções.
-		try {
+
+
+			// Trata instruções e pseudo-instruções
 			auto instruction = Assembler::mnemonics.at(mnemonic);
 
 			// Trata pseudo-instruções.
@@ -149,14 +142,18 @@ void Assembler::runStep(bool step) {
 
 			if (step) {
 				uint16_t code = instruction.code + (operandValue & instruction.mask);
-				this->list.insert({ lineNumber, instructionCounter, code, line });
+				this->list.insert({ lineNumber, line, instruction.size, instructionCounter, code });
 			}
 
 			instructionCounter += instruction.size;
 		}
+		catch (std::string e) {
+			throw "\n" + std::to_string(lineNumber) + ": " + e;
+		}
 		catch (const std::out_of_range) {
 			throw "\n" + std::to_string(lineNumber) + ": O mnemônico " + mnemonic + " não foi reconhecido.";
 		}
+
 
 
 	}
@@ -169,29 +166,32 @@ void Assembler::runStep(bool step) {
 /**
 * 
 */
-int Assembler::operandValue(std::string operand, bool step) {
+int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 	// Verifica se o operando está definido (todas as operações possuem um operando).
 	if (!operand.length())
 		throw "Operando não definido.";
 
 	// Imediatos
-	if (operand[0] == '/') {
+	if (operand[0] == '/')
 		return std::stoi(operand.substr(1), nullptr, 16);
-	}
-	else if (operand[0] == '\'') {
+	else if (operand[0] == '\'')
 		return static_cast<unsigned>(operand[1]);
-	}
-	else if (operand.find_first_not_of("+-0123456789") == std::string::npos) {
+	else if (operand.find_first_not_of("+-0123456789") == std::string::npos)
 		return std::stoi(operand);
-	}
+
 
 	// Labels
 	std::string::size_type posOperation = operand.find_first_of("+-/*");
 	std::string label = operand.substr(0, posOperation);
 
+	if (!allowLabel)
+		throw "\'" + label + "\' foi identificada como sendo uma label e não é suportada neste caso.";
+
+
 	// Primeiro passo adiciona a label à lista de labels não definidas.
 	if (!step) {
 		this->labels.waitFor(label);
+
 		return 0;
 	}
 

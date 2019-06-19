@@ -15,7 +15,6 @@
  *
  */
 Label::Label() {
-	this->labels = {};
 }
 
 
@@ -23,7 +22,6 @@ Label::Label() {
  *
  */
 Label::~Label() {
-
 }
 
 
@@ -38,12 +36,10 @@ void Label::define(std::string label, unsigned address) {
 			throw label + " não pode ser utilizado como uma label pois é um mnemônico de uma instrução.";
 	}
 
-	if (!this->labels.count(label) || this->labels.at(label) == UNDEFINED) {
+	if (!this->labels.count(label) || this->labels.at(label) == Label::UNDEFINED)
 		this->labels[label] = address;
-	}
-	else {
+	else
 		throw "A label " + label + " foi definida mais de uma vez.";
-	}
 
 	return;
 }
@@ -53,7 +49,8 @@ void Label::define(std::string label, unsigned address) {
  * Adiciona label como UNDEFINED apenas se já não tiver sido definida.
  */
 void Label::waitFor(std::string label) {
-	this->labels.insert({ label, UNDEFINED });
+	this->labels.insert({ label, Label::UNDEFINED });
+
 	return;
 }
 
@@ -93,7 +90,7 @@ void Label::dump(std::string fileName) {
  */
 void Label::checkIntegrity() {
 	for (const auto& l : this->labels) {
-		if (l.second == UNDEFINED)
+		if (l.second == Label::UNDEFINED)
 			throw "A label " + l.first + " foi usada, mas não foi definida.";
 	}
 
