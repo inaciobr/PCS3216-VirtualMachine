@@ -14,20 +14,6 @@
 /**
  *
  */
-Label::Label() {
-}
-
-
-/**
- *
- */
-Label::~Label() {
-}
-
-
-/**
- *
- */
 void Label::define(std::string label, unsigned address) {
 	label = label.substr(0, label.find_last_of(":+-/*"));
 

@@ -11,67 +11,26 @@
 #include <iomanip>
 #include <sstream>
 
-/**
- *  Tabela de mnemônicos.
- */
-const std::map<std::string, Assembler::Instruction> Assembler::mnemonics = {
-	// Instruções
-	{ "JP",	{ 0x0000,	2,	0x0FFF	} },	// Jump (UNCONDITIONAL)
-	{ "JZ",	{ 0x1000,	2,	0x0FFF	} },	// Jump if zero
-	{ "JN",	{ 0x2000,	2,	0x0FFF	} },	// Jump if negative
-	{ "CN",	{ 0x30,		1,	0x0F	} },	// Control
-	{  "+",	{ 0x4000,	2,	0x0FFF	} },	// Add
-	{  "-",	{ 0x5000,	2,	0x0FFF	} },	// Subtract
-	{  "*",	{ 0x6000,	2,	0x0FFF	} },	// Multiply
-	{  "/",	{ 0x7000,	2,	0x0FFF	} },	// Divide
-	{ "LD",	{ 0x8000,	2,	0x0FFF	} },	// Load from memory
-	{ "MM",	{ 0x9000,	2,	0x0FFF	} },	// Move to memory
-	{ "SC",	{ 0xA000,	2,	0x0FFF	} },	// Subroutine call
-	{ "OS",	{ 0xB0,		1,	0x0F	} },	// Operating system call
-	{ "IO",	{ 0xC0,		1,	0x0F	} },	// Input/Output
-	//{ ??,	{ 0xD,		1,	0x0F	} },	// Free
-	//{ ??,	{ 0xE,		1,	0x0F	} },	// Free
-	//{ ??,	{ 0xF,		1,	0x0F	} },	// Free
-
-	// Pseudo-Instruções
-	{ "K",	{ 0x00,		1,	0xFF	} },	// DB
-	{ "$",	{ 0x00,		0,	0x00	} },	// BLOC
-	{ "@",	{ 0x0000,	0,	0xFFFF	} },	// ORG
-	{ "#",	{ 0xFFFF,	0,	0xFFFF	} },	// END
-};
-
-
-/**
-* TODO
-*/
-Assembler::Assembler(std::string fileName) {
-	this->inputFile = fileName;
-	this->outputFile = fileName.substr(0, fileName.find_last_of('.')) + ".bin";
-}
-
-
-/**
-* TODO
-*/
-Assembler::~Assembler() {
-}
-
 
 /**
 * TODO
 */
 std::string Assembler::assemble() {
+	// Roda os passos do assembler e verifica se todas as labels usadas foram definidas.
 	this->runStep(0);
-	//this->labels.checkIntegrity();
+	this->labels.checkIntegrity();
 	this->runStep(1);
 
+	// Escreve arquivos com os dados da tabela de labels e outro com a listagem.
 	this->labels.dump(this->inputFile + ".labels");
 	this->list.dump(this->inputFile + ".lst");
 
-	//this->makeObject();
-	//this->makeBin();
+	// Arquivos de saída.
+	std::string outputFile = this->inputFile.substr(0, this->inputFile.find_last_of('.')) + ".bin";
+	this->makeObject(outputFile);
+	this->makeBin(outputFile);
 
-	return this->outputFile;
+	return outputFile;
 }
 
 
@@ -121,13 +80,11 @@ void Assembler::runStep(bool step) {
 		}
 
 		try {
-			// Obtém o valor do operando e valida as labels.
-			int operandValue = this->operandValue(operand, step);
-
-
-
 			// Trata instruções e pseudo-instruções
 			auto instruction = Assembler::mnemonics.at(mnemonic);
+
+			// Obtém o valor do operando e valida as labels.
+			int operandValue = this->operandValue(operand, step, instruction.allowLabel);
 
 			// Trata pseudo-instruções.
 			if (mnemonic == "$") {
@@ -240,6 +197,14 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 /**
 * TODO
 */
-void Assembler::makeObject() {
+void Assembler::makeObject(std::string outputFile) {
+
+}
+
+
+/**
+* TODO
+*/
+void Assembler::makeBin(std::string outputFile) {
 
 }

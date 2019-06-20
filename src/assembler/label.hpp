@@ -11,8 +11,8 @@
 
 class Label {
 public:
-	Label();
-	~Label();
+	Label() = default;
+	~Label() = default;
 
 	void define(std::string label, unsigned address);
 	void waitFor(std::string label);

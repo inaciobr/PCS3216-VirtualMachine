@@ -13,20 +13,6 @@
 /**
  *
  */
-ListCode::ListCode() {
-}
-
-
-/**
- *
- */
-ListCode::~ListCode() {
-}
-
-
-/**
- *
- */
 void ListCode::insert(Line cd) {
 	this->lst.push_back(cd);
 

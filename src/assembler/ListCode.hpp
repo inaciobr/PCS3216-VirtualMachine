@@ -11,8 +11,8 @@
 
 class ListCode {
 public:
-	ListCode();
-	~ListCode();
+	ListCode() = default;
+	~ListCode() = default;
 
 	struct Line {
 		unsigned lineNumber;
