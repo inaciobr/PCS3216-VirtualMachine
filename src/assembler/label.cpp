@@ -14,7 +14,7 @@
 /**
  *
  */
-void Label::define(std::string label, unsigned address) {
+void Label::define(std::string label, unsigned int address) {
 	label = label.substr(0, label.find_last_of(":+-/*"));
 
 	for (const auto& m : Assembler::mnemonics) {
@@ -44,7 +44,7 @@ void Label::waitFor(std::string label) {
 /**
  *
  */
-unsigned Label::getValue(std::string label) {
+unsigned int Label::getValue(std::string label) {
 	return this->labels.at(label);
 }
 

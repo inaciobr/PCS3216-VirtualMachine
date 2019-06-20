@@ -40,51 +40,43 @@ std::string Assembler::assemble() {
 void Assembler::runStep(bool step) {
 	std::ifstream assemblyFile(this->inputFile);
 	unsigned instructionCounter = 0;
-	unsigned lineNumber = 0;
+	unsigned lineNumber = 1;
 
-	for (std::string line; std::getline(assemblyFile, line); ) {
+	for (std::string line; std::getline(assemblyFile, line); lineNumber++) {
+		// Leitura dos dados da linha.
+		std::string label, mnemonic, operand;
+		std::istringstream sline(line);
+
 		// Retira comentários e procura a primeira palavra da linha.
 		std::string command = line.substr(0, line.find_last_of(';'));
-		auto pos = command.find_first_not_of(" \t\n");
-		lineNumber++;
 
-		// Linha sem comando.
-		if (pos == std::string::npos) {
-			if (step)
-				this->list.insert({ lineNumber, line, 0 });
-
-			continue;
-		}
-
-		// Leitura dos commandos.
-		std::istringstream sline(line);
-		std::string label, mnemonic, operand;
-
-		// Definição de label.
-		if (pos == 0) { 
+		// Trata caso onde há definição de label.
+		if (command.size() && !std::isspace(command[0])) {
 			sline >> label;
 
 			if (!step)
 				this->labels.define(label, instructionCounter);
 		}
 
-		// Obtém mnemônico e o operando.
+		// Obtém dados sobre o mnemônico e o operando.
 		sline >> mnemonic >> operand;
 
-		// Linha contém apenas a definição de uma label.
-		if (!mnemonic.length()) {
+		// Linha sem comando ou contendo apenas a definição de uma label.
+		if (!mnemonic.size()) {
 			if (step)
 				this->list.insert({ lineNumber, line, 0 });
 
 			continue;
 		}
 
+
+		
 		try {
-			// Trata instruções e pseudo-instruções
+			// Obtém a instrução ou pseudo-instrução.
 			auto instruction = Assembler::mnemonics.at(mnemonic);
 
 			// Obtém o valor do operando e valida as labels.
-			int operandValue = this->operandValue(operand, step, instruction.allowLabel);
+			auto operandValue = this->operandValue(operand, step, instruction.allowLabel);
 
 			// Trata pseudo-instruções.
 			if (mnemonic == "$") {
@@ -115,6 +107,8 @@ void Assembler::runStep(bool step) {
 
 	}
 
+	// VERIFICAR END
+	// VERIFICAR TAMANHO MAXIMO (0XFFFE)
 	assemblyFile.close();
 	return;
 }
@@ -125,65 +119,60 @@ void Assembler::runStep(bool step) {
 */
 int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 	// Verifica se o operando está definido (todas as operações possuem um operando).
-	if (!operand.length())
+	if (!operand.size())
 		throw "Operando não definido.";
+
+	// Verifica se há alguma operação para ocorrer.
+	std::string::size_type posOperation = operand.find_first_of("+-/*");
 
 	// Imediatos
 	if (operand[0] == '/')
 		return std::stoi(operand.substr(1), nullptr, 16);
 	else if (operand[0] == '\'')
 		return static_cast<unsigned>(operand[1]);
-	else if (operand.find_first_not_of("+-0123456789") == std::string::npos)
+	else if (operand[0] == '+' || operand[0] == '-' || std::isdigit(operand[0]))
 		return std::stoi(operand);
 
 
 	// Labels
-	std::string::size_type posOperation = operand.find_first_of("+-/*");
 	std::string label = operand.substr(0, posOperation);
 
+	// Envia uma exceção caso labels não sejam permitidas.
 	if (!allowLabel)
 		throw "\'" + label + "\' foi identificada como sendo uma label e não é suportada neste caso.";
-
 
 	// Primeiro passo adiciona a label à lista de labels não definidas.
 	if (!step) {
 		this->labels.waitFor(label);
-
-		return 0;
+		return Label::UNDEFINED;
 	}
 
 	// Obtém o valor da label.
 	int value = this->labels.getValue(label);
 
-	// Caso não haja nenhuma operação em cima da label, retorna o valor dela.
+	// Caso não haja nenhuma operação com a label, retorna o valor dela.
 	if (posOperation == std::string::npos)
 		return value;
 
-	// Caso haja alguma operação em cima da label, obtém o valor do segundo termo.
-	std::string::size_type posEnd;
-	std::string secTerm = operand.substr(posOperation + 1);
-	int secTermValue = std::stoi(secTerm, &posEnd);
-
-	// Se ouver algum caractere não reconhecido no segundo termo, acusa erro.
-	if (secTerm.size() != posEnd)
-		throw "Os caracteres \'" + secTerm.substr(posEnd) + "\' não foram reconhecidos.";
+	// Caso haja alguma operação com a label, obtém o valor do segundo termo desta operação.
+	auto secondTermValue = this->operandValue(operand.substr(posOperation + 1), step, allowLabel);
 
 	// Calcula o valor resultante da operação em cima da label.
 	switch (operand[posOperation]) {
 	case '+':
-		value += secTermValue;
+		value += secondTermValue;
 		break;
 
 	case '-':
-		value -= secTermValue;
+		value -= secondTermValue;
 		break;
 
 	case '*':
-		value *= secTermValue;
+		value *= secondTermValue;
 		break;
 
 	case '/':
-		value /= secTermValue;
+		value /= secondTermValue;
 		break;
 
 	default:

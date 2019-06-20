@@ -11,18 +11,18 @@
 
 class ListCode {
 public:
-	ListCode() = default;
-	~ListCode() = default;
+	ListCode() {};
+	~ListCode() {};
 
 	struct Line {
-		unsigned lineNumber;
+		unsigned int lineNumber;
 		std::string source;
 
-		unsigned sizeCode;
-		unsigned address;
+		unsigned int sizeCode;
+		unsigned int address;
 
 		union {
-			unsigned value;
+			unsigned int value;
 			std::uint8_t byte[2];
 		} code;
 	};

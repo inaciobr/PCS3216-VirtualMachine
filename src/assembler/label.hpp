@@ -11,12 +11,12 @@
 
 class Label {
 public:
-	Label() = default;
-	~Label() = default;
+	Label() {};
+	~Label() {};
 
-	void define(std::string label, unsigned address);
+	void define(std::string label, unsigned int address);
 	void waitFor(std::string label);
-	unsigned getValue(std::string label);
+	unsigned int getValue(std::string label);
 
 	void dump(std::string fileName);
 	void checkIntegrity();

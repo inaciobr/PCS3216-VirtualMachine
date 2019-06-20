@@ -15,7 +15,7 @@ LOOP    IO  /1        ; Read byte from file
         MM  IADDR+1   ; Put it back
 
         LD  SIZE      ; Get size
-        -   ONE      ; Subtract 1
+        -   ONE       ; Subtract 1
         MM  SIZE      ; Put it back
 
         JZ  END       ; Finish if size = 0
@@ -27,4 +27,4 @@ IADDR   K   0
         K   0
 SIZE    K   0
 ONE     K   1
-        # INIT
+        #   INIT

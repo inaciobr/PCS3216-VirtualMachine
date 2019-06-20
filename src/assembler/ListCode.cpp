@@ -50,7 +50,7 @@ void ListCode::dump(std::string fileName) {
 			listFile << std::dec << std::setfill(' ');
 		}
 		else {
-			listFile << std::setw(20) << "";
+			listFile << std::setw(21) << "";
 		}
 
 		listFile << std::setw(5) << "" << std::left << l.source << std::endl;
