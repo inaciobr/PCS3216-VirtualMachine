@@ -44,75 +44,75 @@ void Assembler::runStep(bool step) {
 
 	for (std::string line; std::getline(assemblyFile, line); lineNumber++) {
 		// Leitura dos dados da linha.
-		std::string label, mnemonic, operand;
-		std::istringstream sline(line);
-
-		// Retira comentários e procura a primeira palavra da linha.
-		std::string command = line.substr(0, line.find_last_of(';'));
+		Line lineValues(line, lineNumber);
 
 		// Trata caso onde há definição de label.
-		if (command.size() && !std::isspace(command[0])) {
-			sline >> label;
+		if (!step && lineValues.label.size())
+			this->labels.define(lineValues.label, instructionCounter);
 
-			if (!step)
-				this->labels.define(label, instructionCounter);
-		}
-
-		// Obtém dados sobre o mnemônico e o operando.
-		sline >> mnemonic >> operand;
-
-		// Linha sem comando ou contendo apenas a definição de uma label.
-		if (!mnemonic.size()) {
-			if (step)
-				this->list.insert({ lineNumber, line, 0 });
-
-			continue;
-		}
-
-
-		
+		// Trata instruções e pseudo-instruções.
 		try {
-			// Obtém a instrução ou pseudo-instrução.
-			auto instruction = Assembler::mnemonics.at(mnemonic);
+			auto instruction = this->processInstruction(lineValues, instructionCounter, step);
 
-			// Obtém o valor do operando e valida as labels.
-			auto operandValue = this->operandValue(operand, step, instruction.allowLabel);
+			if (step)
+				this->list.insert({ lineNumber, line, instructionCounter, instruction.size, instruction.code });
 
-			// Trata pseudo-instruções.
-			if (mnemonic == "$") {
-				instructionCounter += operandValue;
-			}
-			else if (operand == "@") {
-				instructionCounter = operandValue;
-			}
-			else if (operand == "#") {
-
-			}
-
-			if (step) {
-				uint16_t code = instruction.code + (operandValue & instruction.mask);
-				this->list.insert({ lineNumber, line, instruction.size, instructionCounter, code });
-			}
-
-			instructionCounter += instruction.size;
+			instructionCounter = instruction.nextInstruction;
 		}
 		catch (std::string e) {
 			throw "\n" + std::to_string(lineNumber) + ": " + e;
 		}
-		catch (const std::out_of_range) {
-			throw "\n" + std::to_string(lineNumber) + ": O mnemônico " + mnemonic + " não foi reconhecido.";
-		}
-
-
-
 	}
 
-	// VERIFICAR END
-	// VERIFICAR TAMANHO MAXIMO (0XFFFE)
 	assemblyFile.close();
+
+	// VERIFICAR END
+	if (instructionCounter >= 0xFFFE)
+		throw "\nO código possui tamanho " + std::to_string(instructionCounter) + ", ultrapassando o limite de 0xFFFE";
+
 	return;
 }
 
+
+Assembler::processedInstruction Assembler::processInstruction(Assembler::Line lineValues, unsigned int instructionCounter, bool step) {
+	if (!lineValues.mnemonic.size())
+		return { instructionCounter, 0, 0 };
+
+	// Obtém a instrução ou pseudo-instrução.
+	Assembler::Instruction instruction;
+	try {
+		instruction = Assembler::mnemonics.at(lineValues.mnemonic);
+	}
+	catch (const std::out_of_range) {
+		throw "O mnemônico " + lineValues.mnemonic + " não foi reconhecido.";
+	}
+
+	// Obtém o valor do operando e valida as labels.
+	auto operandValue = this->operandValue(lineValues.operand, step, instruction.allowLabel);
+
+
+	/*
+	uint16_t code = 0;
+	// Trata pseudo-instruções.
+	if (mnemonic == "$") {
+		instructionCounter += operandValue;
+	}
+	else if (operand == "@") {
+		instructionCounter = operandValue;
+	}
+	else if (operand == "#") {
+
+	}
+
+	if (step) {
+		code = instruction.code + (operandValue & instruction.mask);
+	}
+
+	instructionCounter += instruction.size;
+	}*/
+
+	return { instructionCounter + 2, 2, 2 };
+}
 
 /**
 * 
@@ -120,7 +120,7 @@ void Assembler::runStep(bool step) {
 int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 	// Verifica se o operando está definido (todas as operações possuem um operando).
 	if (!operand.size())
-		throw "Operando não definido.";
+		throw "Operando não definido."; 
 
 	// Verifica se há alguma operação para ocorrer.
 	std::string::size_type posOperation = operand.find_first_of("+-/*");
@@ -132,7 +132,6 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 		return static_cast<unsigned>(operand[1]);
 	else if (operand[0] == '+' || operand[0] == '-' || std::isdigit(operand[0]))
 		return std::stoi(operand);
-
 
 	// Labels
 	std::string label = operand.substr(0, posOperation);
@@ -155,7 +154,7 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 		return value;
 
 	// Caso haja alguma operação com a label, obtém o valor do segundo termo desta operação.
-	auto secondTermValue = this->operandValue(operand.substr(posOperation + 1), step, allowLabel);
+	auto secondTermValue = operandValue(operand.substr(posOperation + 1), step, allowLabel);
 
 	// Calcula o valor resultante da operação em cima da label.
 	switch (operand[posOperation]) {
@@ -196,4 +195,17 @@ void Assembler::makeObject(std::string outputFile) {
 */
 void Assembler::makeBin(std::string outputFile) {
 
+}
+
+Assembler::Line::Line(std::string text, unsigned int position) : text(text), position(position) {
+	// Retira comentários e procura a primeira palavra da linha.
+	std::string command = text.substr(0, text.find_last_of(';'));
+	std::istringstream sline(command);
+
+	// Obtém dados sobre a label, se houver uma.
+	if (command.size() && !std::isspace(command[0]))
+		sline >> this->label;
+
+	// Obtém dados sobre o mnemônico e o operando.
+	sline >> this->mnemonic >> this->operand;
 }

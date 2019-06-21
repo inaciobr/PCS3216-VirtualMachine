@@ -18,8 +18,8 @@ public:
 		unsigned int lineNumber;
 		std::string source;
 
-		unsigned int sizeCode;
 		unsigned int address;
+		unsigned int sizeCode;
 
 		union {
 			unsigned int value;

@@ -22,11 +22,15 @@ public:
 	std::string assemble();
 
 	struct Instruction;
+	struct processedInstruction;
+	struct Line;
+
 	static const std::unordered_map<std::string, Instruction> mnemonics;
 
 private:
 	void runStep(bool step);
 
+	processedInstruction processInstruction(Assembler::Line lineValues, unsigned int instructionCounter, bool step);
 	int operandValue(std::string, bool step, bool allowLabel = true);
 	
 	void makeObject(std::string outputFile);
@@ -51,6 +55,22 @@ struct Assembler::Instruction {
 	bool allowLabel;
 };
 
+struct Assembler::processedInstruction {
+	unsigned int nextInstruction;
+	unsigned int code;
+	unsigned int size;
+};
+
+struct Assembler::Line {
+	Line(std::string text, unsigned int position);
+
+	std::string text;
+	unsigned int position;
+
+	std::string label;
+	std::string mnemonic;
+	std::string operand;
+};
 
 /**
  *  Tabela de mnemônicos.
