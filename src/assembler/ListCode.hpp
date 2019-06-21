@@ -31,6 +31,5 @@ public:
 	void dump(std::string fileName);
 
 private:
-
 	std::vector<Line> lst;
 };

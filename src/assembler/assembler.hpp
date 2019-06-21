@@ -29,6 +29,7 @@ public:
 
 private:
 	void runStep(bool step);
+	void saveObject();
 
 	processedInstruction processInstruction(Assembler::Line lineValues, unsigned int instructionCounter, bool step);
 	int operandValue(std::string, bool step, bool allowLabel = true);
@@ -42,6 +43,7 @@ private:
 	ListCode list;
 
 	std::vector<uint8_t> code;
+
 };
 
 

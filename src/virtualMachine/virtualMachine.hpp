@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <unordered_map>
 
 class VirtualMachine {
 public:
@@ -9,23 +10,45 @@ public:
 	void load(std::string fileName);
 	void run();
 
-private:
+	struct instruction;
+	static const std::unordered_map<uint8_t, instruction> instructions;
 
-	enum instructions : uint8_t;
+private:
+	void JP();
+	void JZ();
+	void JN();
+	void CN();
+	void ADD();
+	void SUB();
+	void MUL();
+	void DIV();
+	void LD();
+	void MM();
+	void SC();
+	void OS();
+	void IO();
 };
 
-enum VirtualMachine::instructions : uint8_t {
-		JP		= 0x00,
-		JZ		= 0x10,
-		JN		= 0x20,
-		CN		= 0x30,
-		ADD		= 0x40,
-		SUB		= 0x50,
-		MUL		= 0x60,
-		DIV		= 0x70,
-		LD		= 0x80,
-		MM		= 0x90,
-		SC		= 0xA0,
-		OS		= 0xB0,
-		IO		= 0xC0
+struct VirtualMachine::instruction {
+	int size;
+	void (VirtualMachine::*function)();
+};
+
+inline const std::unordered_map<uint8_t, VirtualMachine::instruction> VirtualMachine::instructions = {
+	{ 0x00,	{ 2, } },	// Jump (UNCONDITIONAL)
+	{ 0x01,	{ 2, } },	// Jump if zero
+	{ 0x02,	{ 2, } },	// Jump if negative
+	{ 0x03,	{ 1, } },	// Control
+	{ 0x04,	{ 2, } },	// Add
+	{ 0x05,	{ 2, } },	// Subtract
+	{ 0x06,	{ 2, } },	// Multiply
+	{ 0x07,	{ 2, } },	// Divide
+	{ 0x08,	{ 2, } },	// Load from memory
+	{ 0x09,	{ 2, } },	// Move to memory
+	{ 0x0A,	{ 2, } },	// Subroutine call
+	{ 0x0B,	{ 1, } },	// Operating system call
+	{ 0x0C,	{ 1, } },	// Input/Output
+	//{ ??,	{ 1, } },	// Free
+	//{ ??,	{ 1, } },	// Free
+	//{ ??,	{ 1, } },	// Free
 };

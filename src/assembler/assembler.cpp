@@ -25,12 +25,7 @@ std::string Assembler::assemble() {
 	this->labels.dump(this->inputFile + ".labels");
 	this->list.dump(this->inputFile + ".lst");
 
-	// Arquivos de saída.
-	std::string outputFile = this->inputFile.substr(0, this->inputFile.find_last_of('.')) + ".bin";
-	this->makeObject(outputFile);
-	this->makeBin(outputFile);
-
-	return outputFile;
+	return std::string("");
 }
 
 
@@ -84,12 +79,11 @@ Assembler::processedInstruction Assembler::processInstruction(Assembler::Line li
 		instruction = Assembler::mnemonics.at(lineValues.mnemonic);
 	}
 	catch (const std::out_of_range) {
-		throw "O mnemônico " + lineValues.mnemonic + " não foi reconhecido.";
+		throw std::string("O mnemônico " + lineValues.mnemonic + " não foi reconhecido.");
 	}
 
-	auto operandValue = this->operandValue(lineValues.operand, step, instruction.allowLabel);
+	uint16_t operandValue = this->operandValue(lineValues.operand, step, instruction.allowLabel);
 	uint16_t code = instruction.code + (operandValue & instruction.mask);
-	instructionCounter += instruction.size;
 
 	// Trata pseudo-instruções
 	if (lineValues.mnemonic == "$") {
@@ -97,12 +91,36 @@ Assembler::processedInstruction Assembler::processInstruction(Assembler::Line li
 	}
 	else if (lineValues.mnemonic == "@") {
 		instructionCounter = operandValue;
-	}
-	else if (lineValues.mnemonic == "#") {
 
+		if (step) {
+			if (this->code.size()) {
+				this->saveObject();
+				this->code.clear();
+			}
+
+			this->code.push_back((operandValue & 0xFF00) >> 8);
+			this->code.push_back(operandValue & 0xFF);
+			this->code.push_back(0x00);
+		}
+	}
+	else if (step && lineValues.mnemonic == "#") {
+		if (!this->code.size())
+			throw std::string("Tentativa de finalizar um programa que não foi inicializado.");
+
+		this->code[2] = this->code.size() - 3;
+
+		this->saveObject();
+		this->code.clear();
 	}
 	else {
 		instructionCounter += instruction.size;
+
+		if (step) {
+			if (instruction.size == 2)
+				this->code.push_back((code & 0xFF00) >> 8);
+
+			this->code.push_back(code & 0xFF);
+		}
 	}
 
 	return { instructionCounter, instruction.size, code };
@@ -114,7 +132,7 @@ Assembler::processedInstruction Assembler::processInstruction(Assembler::Line li
 int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 	// Verifica se o operando está definido (todas as operações possuem um operando).
 	if (!operand.size())
-		throw "Operando não definido."; 
+		throw std::string("Operando não definido.");
 
 	// Verifica se há alguma operação para ocorrer.
 	std::string::size_type posOperation = operand.find_first_of("+-/*");
@@ -132,7 +150,7 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 
 	// Envia uma exceção caso labels não sejam permitidas.
 	if (!allowLabel)
-		throw "\'" + label + "\' foi identificada como sendo uma label e não é suportada neste caso.";
+		throw std::string("\'" + label + "\' foi identificada como sendo uma label e não é suportada neste caso.");
 
 	// Primeiro passo adiciona a label à lista de labels não definidas.
 	if (!step) {
@@ -169,7 +187,7 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 		break;
 
 	default:
-		throw "O caractere \'" + std::to_string(operand[posOperation]) + "\' não foi reconhecido.";
+		throw std::string("O caractere \'" + std::to_string(operand[posOperation]) + "\' não foi reconhecido.");
 	}
 
 	return value;
@@ -179,8 +197,33 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 /**
 * TODO
 */
-void Assembler::makeObject(std::string outputFile) {
+void Assembler::saveObject() {
+	std::string outputFile = this->inputFile.substr(0, this->inputFile.find_last_of('.'));
 
+	this->makeObject(outputFile + ".obj");
+	this->makeBin(outputFile + ".bin");
+}
+
+
+/**
+* TODO
+*/
+void Assembler::makeObject(std::string outputFile) {
+	std::ofstream objectFile(outputFile);
+	uint8_t checkSum = 0xFF;
+
+	objectFile << std::hex << std::setfill('0');
+
+	for (const auto& c : this->code) {
+		checkSum ^= c;
+		objectFile << std::uppercase << std::setw(2) << static_cast<unsigned>(c) << " ";
+	}
+
+	objectFile << static_cast<unsigned>(checkSum);
+
+	objectFile.close();
+
+	return;
 }
 
 
@@ -188,7 +231,19 @@ void Assembler::makeObject(std::string outputFile) {
 * TODO
 */
 void Assembler::makeBin(std::string outputFile) {
+	std::ofstream objectFile(outputFile, std::ofstream::binary);
+	uint8_t checkSum = 0xFF;
 
+	for (const auto& c : this->code) {
+		checkSum ^= c;
+		objectFile << c;
+	}
+
+	objectFile << checkSum;
+
+	objectFile.close();
+
+	return;
 }
 
 Assembler::Line::Line(std::string text, unsigned int position) : text(text), position(position) {

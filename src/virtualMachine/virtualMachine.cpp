@@ -19,23 +19,107 @@ void VirtualMachine::load(std::string fileName) {
 
 void VirtualMachine::run() {
 	unsigned instruction = 1;
+}
 
-	switch (instruction) {
-	case VirtualMachine::JP:
-	case VirtualMachine::JZ:
-	case VirtualMachine::JN:
-	case VirtualMachine::CN:
-	case VirtualMachine::ADD:
-	case VirtualMachine::SUB:
-	case VirtualMachine::MUL:
-	case VirtualMachine::DIV:
-	case VirtualMachine::LD:
-	case VirtualMachine::MM:
-	case VirtualMachine::SC:
-	case VirtualMachine::OS:
-	case VirtualMachine::IO:
+// INSTRUCTIONS
+/*
+*
+*/
+void VirtualMachine::JP() {
 
-	default:
-		throw "Instrução não reconhecida";
-	}
+}
+
+
+/*
+*
+*/
+void VirtualMachine::JZ() {
+
+}
+
+
+/*
+*
+*/
+void VirtualMachine::JN() {
+
+}
+
+/*
+*
+*/
+void VirtualMachine::CN() {
+
+}
+
+
+/*
+*
+*/
+void VirtualMachine::ADD() {
+
+}
+
+
+/*
+*
+*/
+void VirtualMachine::SUB() {
+
+}
+
+
+/*
+*
+*/
+void VirtualMachine::MUL() {
+
+}
+
+
+/*
+*
+*/
+void VirtualMachine::DIV() {
+
+}
+
+
+/*
+*
+*/
+void VirtualMachine::LD() {
+
+}
+
+
+/*
+*
+*/
+void VirtualMachine::MM() {
+
+}
+
+
+/*
+*
+*/
+void VirtualMachine::SC() {
+
+}
+
+
+/*
+*
+*/
+void VirtualMachine::OS() {
+
+}
+
+
+/*
+*
+*/
+void VirtualMachine::IO() {
+
 }
