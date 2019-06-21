@@ -57,8 +57,8 @@ struct Assembler::Instruction {
 
 struct Assembler::processedInstruction {
 	unsigned int nextInstruction;
-	unsigned int code;
 	unsigned int size;
+	unsigned int code;
 };
 
 struct Assembler::Line {

@@ -52,7 +52,7 @@ void Assembler::runStep(bool step) {
 
 		// Trata instruções e pseudo-instruções.
 		try {
-			auto instruction = this->processInstruction(lineValues, instructionCounter, step);
+			Assembler::processedInstruction instruction = this->processInstruction(lineValues, instructionCounter, step);
 
 			if (step)
 				this->list.insert({ lineNumber, line, instructionCounter, instruction.size, instruction.code });
@@ -87,35 +87,29 @@ Assembler::processedInstruction Assembler::processInstruction(Assembler::Line li
 		throw "O mnemônico " + lineValues.mnemonic + " não foi reconhecido.";
 	}
 
-	// Obtém o valor do operando e valida as labels.
 	auto operandValue = this->operandValue(lineValues.operand, step, instruction.allowLabel);
+	uint16_t code = instruction.code + (operandValue & instruction.mask);
+	instructionCounter += instruction.size;
 
-
-	/*
-	uint16_t code = 0;
-	// Trata pseudo-instruções.
-	if (mnemonic == "$") {
+	// Trata pseudo-instruções
+	if (lineValues.mnemonic == "$") {
 		instructionCounter += operandValue;
 	}
-	else if (operand == "@") {
+	else if (lineValues.mnemonic == "@") {
 		instructionCounter = operandValue;
 	}
-	else if (operand == "#") {
+	else if (lineValues.mnemonic == "#") {
 
 	}
-
-	if (step) {
-		code = instruction.code + (operandValue & instruction.mask);
+	else {
+		instructionCounter += instruction.size;
 	}
 
-	instructionCounter += instruction.size;
-	}*/
-
-	return { instructionCounter + 2, 2, 2 };
+	return { instructionCounter, instruction.size, code };
 }
 
 /**
-* 
+* Obtém o valor do operando e valida as labels.
 */
 int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 	// Verifica se o operando está definido (todas as operações possuem um operando).
