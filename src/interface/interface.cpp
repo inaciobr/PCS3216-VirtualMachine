@@ -101,8 +101,17 @@ void Interface::virtualMachineMenu() {
 		case RUN:
 			break;
 
-		case READMEMORY:
+		case READMEMORY: {
+			int addr, size;
+
+			std::cout << "Digite o endereco que deseja ler: ";
+			std::cin >> addr;
+			std::cout << "Digite a quantidade de valores que deseja ler: ";
+			std::cin >> size;
+
+			VM.printMemory(addr, size);
 			break;
+		}
 
 		case READPOINTERS:
 			VM.printPointers();

@@ -12,3 +12,7 @@ uint8_t memory::getIndirectValue(uint16_t pos) const {
 uint8_t memory::getValue(uint16_t pos) const {
 	return this->content[pos];
 }
+
+uint8_t memory::setValue(uint16_t pos, uint8_t value) {
+	return this->content[pos] = value;
+}

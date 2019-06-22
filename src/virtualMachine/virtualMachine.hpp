@@ -17,6 +17,7 @@ public:
 
 	void printPointers() const;
 	void printMemoryBanks() const;
+	void printMemory(int addr, int size) const;
 
 private:
 	uint16_t instructionCounter;

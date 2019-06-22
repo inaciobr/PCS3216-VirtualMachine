@@ -3,14 +3,28 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <fstream>
 
 #include "../interface/interface.hpp"
 
 
 VirtualMachine::VirtualMachine(unsigned int numBanks, unsigned int bankSize) :
-	currentByte(0), instructionCounter(0), accumulator(0), indirectMode(false), currentBank(0)
+	currentByte(0), accumulator(0), indirectMode(false), currentBank(0)
 {
 	this->mainMemory.resize(numBanks, bankSize);
+
+	std::ifstream loader("system/loader.bin", std::ifstream::binary);
+	char header[3];
+	loader.read((char *)&header, 3);
+	this->instructionCounter = header[0] << 8 | header[1];
+
+	std::vector<char> buffer(header[2]);
+	loader.read(buffer.data(), header[2]);
+
+	for (const auto& v : buffer)
+		this->mainMemory[0].setValue(instructionCounter++, v & 0xFF);
+
+	loader.close();
 }
 
 
@@ -33,6 +47,26 @@ void VirtualMachine::printMemoryBanks() const {
 	std::cout << std::to_string(this->mainMemory.size()) << " bancos de memoria ativos." << std::endl;
 
 	return;
+}
+
+void VirtualMachine::printMemory(int addr, int size) const {
+	std::cout << "      " << std::setfill('0') << std::hex << std::uppercase;
+
+	for (int i = 0; i < 16; i++)
+		std::cout << i << "   ";
+
+	std::cout << std::endl;
+
+	if (size & 0xF)
+		size += 0x10;
+
+	for (int i = 0; i < size >> 4; i++) {
+		std::cout << "0x" << std::setw(2) << (addr&0x0FF0) + i << " ";
+		for (int j = 0; j < 16; j++)
+			std::cout << std::setw(2) << (int)this->mainMemory[addr >> 12].getValue((addr&0x0FF0) + j + (i << 4)) << "  ";
+
+		std::cout << std::endl;
+	}
 }
 
 
