@@ -128,6 +128,7 @@
     <ClInclude Include="..\src\assembler\label.hpp" />
     <ClInclude Include="..\src\assembler\ListCode.hpp" />
     <ClInclude Include="..\src\interface\interface.hpp" />
+    <ClInclude Include="..\src\virtualMachine\memory.hpp" />
     <ClInclude Include="..\src\virtualMachine\virtualMachine.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -136,6 +137,7 @@
     <ClCompile Include="..\src\assembler\ListCode.cpp" />
     <ClCompile Include="..\src\interface\interface.cpp" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\virtualMachine\memory.cpp" />
     <ClCompile Include="..\src\virtualMachine\virtualMachine.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -29,29 +29,24 @@ void Interface::menu() {
 	int menu;
 	enum options { EXIT, ASSEMBLER, VIRTUALMACHINE };
 
-	while (true) {
-		std::cout << std::endl;
-		std::cout << EXIT << ". Sair" << std::endl;
-		std::cout << ASSEMBLER << ". Assembler" << std::endl;
-		std::cout << VIRTUALMACHINE << ". Virtual Machine" << std::endl;
-		std::cout << "\nDigite o número da opção desejada: ";
+	std::cout << std::endl;
+	std::cout << EXIT << ". Sair" << std::endl;
+	std::cout << ASSEMBLER << ". Assembler" << std::endl;
+	std::cout << VIRTUALMACHINE << ". Virtual Machine" << std::endl;
+	std::cout << "\nDigite o numero da opcao desejada: ";
 
-		/*
-		switch (std::cin >> menu; menu) {
-		case ASSEMBLER:
-			this->assemblerMenu();
-			break;
-
-		case VIRTUALMACHINE:
-			this->virtualMachineMenu();
-			break;
-
-		case EXIT:
-		default:
-			return;
-		}
-		*/
+		
+	switch (std::cin >> menu; menu) {
+	case ASSEMBLER:
 		this->assemblerMenu();
+		break;
+
+	case VIRTUALMACHINE:
+		this->virtualMachineMenu();
+		break;
+
+	case EXIT:
+	default:
 		break;
 	}
 
@@ -63,21 +58,20 @@ void Interface::menu() {
  * Inicializa o assembler.
  */
 void Interface::assemblerMenu() {
-	//std::string fileName = this->inputFile();
-	std::string fileName = "code/test.asm";
+	std::string fileName = this->inputFile();
 
 	Assembler assembler(fileName);
 	std::string binFile;
 
 	try {
-		binFile = assembler.assemble();
+		assembler.assemble();
 	}
 	catch (std::string e) {
 		std::cout << e << std::endl;
 		return;
 	}
 
-	std::cout << "\nO código foi montado no arquivo " << binFile << " com sucesso." << std::endl;
+	std::cout << "\nO codigo foi montado com sucesso." << std::endl;
 	return;
 }
 
@@ -86,11 +80,52 @@ void Interface::assemblerMenu() {
  * Inicializa a máquina virtual.
  */
 void Interface::virtualMachineMenu() {
-	std::string fileName = this->inputFile();
-
 	VirtualMachine VM;
-	VM.load(fileName);
-	VM.run();
+
+	std::cout << "\nA Maquina Virtual esta em execucao" << std::endl;
+	VM.printMemoryBanks();
+
+
+	int menu;
+	enum options { EXIT, RUN, READMEMORY, READPOINTERS };
+
+	while (true) {
+		std::cout << std::endl;
+		std::cout << EXIT << ". Sair" << std::endl;
+		std::cout << RUN << ". Executar um programa" << std::endl;
+		std::cout << READMEMORY << ". Ler memoria" << std::endl;
+		std::cout << READPOINTERS << ". Ler ponteiros" << std::endl;
+		std::cout << "\nDigite o numero da opcao desejada: ";
+
+		switch (std::cin >> menu; menu) {
+		case RUN:
+			break;
+
+		case READMEMORY:
+			break;
+
+		case READPOINTERS:
+			VM.printPointers();
+			break;
+
+		case EXIT:
+		default:
+			return;
+		}
+
+		this->virtualMachineMenu();
+		break;
+	}
+	//std::string fileName = this->inputFile();
+
+	//VM.load(fileName);
+	try {
+		VM.run();
+	}
+	catch (std::string e) {
+		std::cout << e << std::endl;
+		return;
+	}
 
 	return;
 }
@@ -110,7 +145,7 @@ std::string Interface::inputFile() {
 		if (std::ifstream(fileName))
 			break;
 
-		std::cout << "\nO arquivo não pode ser aberto." << std::endl;
+		std::cout << "\nO arquivo nao pode ser aberto." << std::endl;
 	}
 
 	return fileName;

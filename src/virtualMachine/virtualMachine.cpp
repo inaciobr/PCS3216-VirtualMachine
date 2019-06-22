@@ -2,16 +2,17 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
+
+#include "../interface/interface.hpp"
 
 
-VirtualMachine::VirtualMachine() {
-
+VirtualMachine::VirtualMachine(unsigned int numBanks, unsigned int bankSize) :
+	currentByte(0), instructionCounter(0), accumulator(0), indirectMode(false), currentBank(0)
+{
+	this->mainMemory.resize(numBanks, bankSize);
 }
 
-
-VirtualMachine::~VirtualMachine() {
-
-}
 
 void VirtualMachine::load(std::string fileName) {
 
@@ -21,75 +22,150 @@ void VirtualMachine::run() {
 	unsigned instruction = 1;
 }
 
+void VirtualMachine::printPointers() const {
+	std::cout << "Instruction counter: 0x" << std::hex << std::setfill('0') << std::setw(4) << this->instructionCounter << std::endl;
+	std::cout << "Acumulator: 0x" << std::hex << std::setfill('0') << std::setw(2) << this->accumulator << std::endl;
+	std::cout << "Current Byte: 0x" << std::hex << std::setfill('0') << std::setw(2) << this->currentByte << std::endl;
+	std::cout << "Current Bank: 0x" << std::hex << std::setfill('0') << std::setw(2) << this->currentBank << std::endl;
+}
+
+void VirtualMachine::printMemoryBanks() const {
+	std::cout << std::to_string(this->mainMemory.size()) << " bancos de memoria ativos." << std::endl;
+
+	return;
+}
+
+
+uint16_t VirtualMachine::getOperand2Bytes()
+{
+	return static_cast<uint16_t>((this->currentByte << 8) | this->nextByte()) & 0x0FFF;
+}
+
+
+void VirtualMachine::updatePC(uint16_t operand) {
+	if (this->indirectMode) {
+		this->indirectMode = false;
+		this->instructionCounter = (this->mainMemory[this->currentBank].getValue(operand) << 8
+									 | this->mainMemory[this->currentBank].getValue(operand + 1)) & 0x0FFF;
+		this->currentBank = this->instructionCounter >> 12;
+
+		return;
+	}
+
+	this->instructionCounter = operand;
+	return;
+}
+
+
+void VirtualMachine::runInstruction(uint8_t type) {
+	try {
+		(this->*VirtualMachine::instructions.at(type & 0xF0))();
+	}
+	catch (const std::out_of_range) {
+		throw std::string("A instrução " + std::to_string(type) + " não foi reconhecida.");
+	}
+
+	return;
+}
+
+
+uint8_t VirtualMachine::nextByte() {
+	this->currentByte = this->mainMemory[this->currentBank].getValue(this->instructionCounter + 1);
+	return this->currentByte;
+}
+
+
+uint8_t VirtualMachine::getIndirectValue(uint16_t pos) {
+	if (this->indirectMode) {
+		this->indirectMode = false;
+		return this->mainMemory[this->currentBank].getIndirectValue(pos);
+	}
+
+	return this->mainMemory[this->currentBank].getValue(pos);
+}
+
+
 // INSTRUCTIONS
 /*
-*
+* Jump
 */
 void VirtualMachine::JP() {
-
+	this->updatePC(this->getOperand2Bytes());
+	return;
 }
 
 
 /*
-*
+* Jump on zero
 */
 void VirtualMachine::JZ() {
+	if (!this->accumulator)
+		this->updatePC(this->getOperand2Bytes());
 
+	return;
 }
 
 
 /*
-*
+* Jump on negative
 */
 void VirtualMachine::JN() {
+	if (this->accumulator < 0)
+		this->updatePC(this->getOperand2Bytes());
 
+	return;
 }
 
 /*
 *
 */
 void VirtualMachine::CN() {
-
+	uint8_t operand = this->currentByte & 0x0F;
 }
 
 
 /*
-*
+* Add
 */
 void VirtualMachine::ADD() {
-
+	this->accumulator += this->getIndirectValue(this->getOperand2Bytes());
+	return;
 }
 
 
 /*
-*
+* Subtraction
 */
 void VirtualMachine::SUB() {
-
+	this->accumulator -= this->getIndirectValue(this->getOperand2Bytes());
+	return;
 }
 
 
 /*
-*
+* Multiplication
 */
 void VirtualMachine::MUL() {
-
+	this->accumulator *= this->getIndirectValue(this->getOperand2Bytes());
+	return;
 }
 
 
 /*
-*
+* Division
 */
 void VirtualMachine::DIV() {
-
+	this->accumulator /= this->getIndirectValue(this->getOperand2Bytes());
+	return;
 }
 
 
 /*
-*
+* Load
 */
 void VirtualMachine::LD() {
-
+	this->accumulator = this->getIndirectValue(this->getOperand2Bytes());
+	return;
 }
 
 
@@ -97,7 +173,7 @@ void VirtualMachine::LD() {
 *
 */
 void VirtualMachine::MM() {
-
+	uint16_t operand = this->getOperand2Bytes();
 }
 
 
@@ -105,7 +181,7 @@ void VirtualMachine::MM() {
 *
 */
 void VirtualMachine::SC() {
-
+	uint16_t operand = this->getOperand2Bytes();
 }
 
 
@@ -113,7 +189,7 @@ void VirtualMachine::SC() {
 *
 */
 void VirtualMachine::OS() {
-
+	uint8_t operand = this->currentByte & 0x0F;
 }
 
 
@@ -121,5 +197,5 @@ void VirtualMachine::OS() {
 *
 */
 void VirtualMachine::IO() {
-
+	uint8_t operand = this->currentByte & 0x0F;
 }

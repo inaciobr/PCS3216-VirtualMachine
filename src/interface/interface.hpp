@@ -14,5 +14,5 @@ struct Interface {
 	void assemblerMenu();
 	void virtualMachineMenu();
 
-	std::string inputFile();
+	static std::string inputFile();
 };

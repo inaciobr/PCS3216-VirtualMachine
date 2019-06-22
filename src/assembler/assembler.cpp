@@ -15,7 +15,7 @@
 /**
 * TODO
 */
-std::string Assembler::assemble() {
+void Assembler::assemble() {
 	// Roda os passos do assembler e verifica se todas as labels usadas foram definidas.
 	this->runStep(0);
 	this->labels.checkIntegrity();
@@ -25,7 +25,7 @@ std::string Assembler::assemble() {
 	this->labels.dump(this->inputFile + ".labels");
 	this->list.dump(this->inputFile + ".lst");
 
-	return std::string("");
+	return;
 }
 
 
@@ -61,9 +61,8 @@ void Assembler::runStep(bool step) {
 
 	assemblyFile.close();
 
-	// VERIFICAR END
 	if (instructionCounter >= 0xFFFE)
-		throw "\nO código possui tamanho " + std::to_string(instructionCounter) + ", ultrapassando o limite de 0xFFFE";
+		throw "\nO codigo possui tamanho " + std::to_string(instructionCounter) + ", ultrapassando o limite de 0xFFFE";
 
 	return;
 }
@@ -79,7 +78,7 @@ Assembler::processedInstruction Assembler::processInstruction(Assembler::Line li
 		instruction = Assembler::mnemonics.at(lineValues.mnemonic);
 	}
 	catch (const std::out_of_range) {
-		throw std::string("O mnemônico " + lineValues.mnemonic + " não foi reconhecido.");
+		throw std::string("O mnemonico " + lineValues.mnemonic + " nao foi reconhecido.");
 	}
 
 	uint16_t operandValue = this->operandValue(lineValues.operand, step, instruction.allowLabel);
@@ -132,7 +131,7 @@ Assembler::processedInstruction Assembler::processInstruction(Assembler::Line li
 int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 	// Verifica se o operando está definido (todas as operações possuem um operando).
 	if (!operand.size())
-		throw std::string("Operando não definido.");
+		throw std::string("Operando nao definido.");
 
 	// Verifica se há alguma operação para ocorrer.
 	std::string::size_type posOperation = operand.find_first_of("+-/*");

@@ -19,7 +19,7 @@ public:
 	Assembler(std::string fileName) : inputFile(fileName) {};
 	~Assembler() {};
 
-	std::string assemble();
+	void assemble();
 
 	struct Instruction;
 	struct processedInstruction;

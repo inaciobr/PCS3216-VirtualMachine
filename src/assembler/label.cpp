@@ -7,7 +7,6 @@
 #include "label.hpp"
 #include "assembler.hpp"
 
-#include <iostream>
 #include <fstream>
 #include <iomanip>
 
@@ -77,7 +76,7 @@ void Label::dump(std::string fileName) {
 void Label::checkIntegrity() {
 	for (const auto& l : this->labels) {
 		if (l.second == Label::UNDEFINED)
-			throw "A label " + l.first + " foi usada, mas não foi definida.";
+			throw "A label " + l.first + " foi usada, mas nao foi definida.";
 	}
 
 	return;
