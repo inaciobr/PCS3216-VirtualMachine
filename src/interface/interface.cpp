@@ -147,9 +147,9 @@ std::string Interface::inputFile() {
 	std::string fileName;
 
 	while (true) {
-		std::cout << "Digite o nome do arquivo (dentro da pasta code): ";
+		std::cout << "Digite o nome do arquivo (dentro da pasta programs): ";
 		std::cin >> fileName;
-		fileName = "code/" + fileName;
+		fileName = "programs/" + fileName;
 
 		if (std::ifstream(fileName))
 			break;

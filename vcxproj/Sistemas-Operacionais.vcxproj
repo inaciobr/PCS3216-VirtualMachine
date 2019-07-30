@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{07976C86-7EE6-4493-A5F1-907C79A833E6}</ProjectGuid>
-    <RootNamespace>SisProg</RootNamespace>
+    <ProjectGuid>{99ED085A-5034-4133-BC6F-5DDC073C58CB}</ProjectGuid>
+    <RootNamespace>SistemasOperacionais</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -124,14 +124,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\assembler\assembler.hpp" />
-    <ClInclude Include="..\src\assembler\label.hpp" />
-    <ClInclude Include="..\src\assembler\ListCode.hpp" />
-    <ClInclude Include="..\src\interface\interface.hpp" />
-    <ClInclude Include="..\src\virtualMachine\memory.hpp" />
-    <ClInclude Include="..\src\virtualMachine\virtualMachine.hpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\src\assembler\assembler.cpp" />
     <ClCompile Include="..\src\assembler\label.cpp" />
     <ClCompile Include="..\src\assembler\ListCode.cpp" />
@@ -139,6 +131,14 @@
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\virtualMachine\memory.cpp" />
     <ClCompile Include="..\src\virtualMachine\virtualMachine.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\assembler\assembler.hpp" />
+    <ClInclude Include="..\src\assembler\label.hpp" />
+    <ClInclude Include="..\src\assembler\ListCode.hpp" />
+    <ClInclude Include="..\src\interface\interface.hpp" />
+    <ClInclude Include="..\src\virtualMachine\memory.hpp" />
+    <ClInclude Include="..\src\virtualMachine\virtualMachine.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
