@@ -14,14 +14,15 @@ public:
 	Label() {};
 	~Label() {};
 
-	void define(std::string label, unsigned int address);
 	void waitFor(std::string label);
-	unsigned int getValue(std::string label);
-
+	void define(std::string label, unsigned int address);
+	
+	unsigned getValue(std::string label);
+	
 	void dump(std::string fileName);
 	void checkIntegrity();
 
-	static const unsigned UNDEFINED = -1;
+	static constexpr unsigned UNDEFINED = -1;
 
 private:
 	std::unordered_map<std::string, unsigned> labels;
