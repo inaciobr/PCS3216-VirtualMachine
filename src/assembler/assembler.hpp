@@ -21,7 +21,6 @@ public:
 
 	struct Instruction;
 	struct processedInstruction;
-	struct Line;
 
 	void assemble();
 	static const std::unordered_map<std::string, Instruction> mnemonics;
@@ -30,7 +29,7 @@ private:
 	void runStep(bool step);
 	void saveObject();
 
-	processedInstruction processInstruction(Assembler::Line lineValues, unsigned int instructionCounter, bool step);
+	processedInstruction processInstruction(CodeList::Line lineValues, unsigned int instructionCounter, bool step);
 	int operandValue(std::string, bool step, bool allowLabel = true);
 	
 	void makeObject(std::string outputFile);
@@ -43,17 +42,6 @@ private:
 
 	std::vector<uint8_t> code;
 
-};
-
-struct Assembler::Line {
-	Line(std::string text, unsigned position);
-
-	std::string text;
-	unsigned int position;
-
-	std::string label;
-	std::string mnemonic;
-	std::string operand;
 };
 
 /**

@@ -16,7 +16,7 @@ public:
 
 	struct Line;
 
-	void insert(Line cd);
+	Line insert(Line line);
 	void dump(std::string fileName);
 
 private:
@@ -24,20 +24,23 @@ private:
 };
 
 struct CodeList::Line {
-	Line(std::string source, unsigned lineNumber, unsigned address, unsigned sizeCode);
+	Line(unsigned lineNumber, std::string source);
 
-	std::string source;
-	unsigned lineNumber;
+	void setCode(unsigned address, unsigned size, unsigned code);
 
 	std::string label;
 	std::string mnemonic;
 	std::string operand;
 
 	unsigned address;
-	unsigned sizeCode;
 
 	union {
 		unsigned value;
 		std::uint8_t byte[2];
 	} code;
+
+	std::string source;
+	unsigned lineNumber;
+
+	unsigned codeSize;
 };

@@ -36,18 +36,19 @@ void Assembler::runStep(bool step) {
 
 	for (unsigned lineNumber = 1; std::getline(assemblyFile, line); lineNumber++) {
 		// Leitura dos dados da linha.
-		Line lineValues(line, lineNumber);
+		auto lineData = this->list.insert({ lineNumber, line });
 
 		// Trata caso onde há definição de label.
-		if (!step && lineValues.label.size())
-			this->labels.define(lineValues.label, instructionCounter);
+		if (!step && lineData.label.size())
+			this->labels.define(lineData.label, instructionCounter);
 
 		// Trata instruções e pseudo-instruções.
 		try {
-			Assembler::processedInstruction instruction = this->processInstruction(lineValues, instructionCounter, step);
+			Assembler::processedInstruction instruction = this->processInstruction(lineData, instructionCounter, step);
 
-			if (step)
-				this->list.insert({ lineNumber, line, instructionCounter, instruction.size, instruction.code });
+			if (step) {
+				lineData.setCode(instructionCounter, instruction.size, instruction.code);
+			}
 
 			instructionCounter = instruction.nextInstruction;
 		}
@@ -65,7 +66,7 @@ void Assembler::runStep(bool step) {
 }
 
 
-Assembler::processedInstruction Assembler::processInstruction(Assembler::Line lineValues, unsigned int instructionCounter, bool step) {
+Assembler::processedInstruction Assembler::processInstruction(CodeList::Line lineValues, unsigned int instructionCounter, bool step) {
 	if (!lineValues.mnemonic.size())
 		return { instructionCounter, 0, 0 };
 

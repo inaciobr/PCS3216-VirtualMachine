@@ -14,8 +14,9 @@
 /**
  * Insere nova linha na memória.
  */
-void CodeList::insert(CodeList::Line cd) {
-	this->list.push_back(cd);
+CodeList::Line CodeList::insert(CodeList::Line line) {
+	this->list.push_back(line);
+	return line;
 }
 
 
@@ -43,11 +44,11 @@ void CodeList::dump(std::string fileName) {
 		listFile << std::setw(5) << std::right << l.lineNumber;
 
 		// Informações referentes à linha
-		if (l.sizeCode) {
+		if (l.codeSize) {
 			listFile << std::setw(6) << "0x" << std::setw(4) << std::setfill('0') << std::uppercase 
 				<< std::hex << l.address << std::setfill(' ');
 			
-			if (l.sizeCode == 1)
+			if (l.codeSize == 1)
 				listFile << std::setw(9) << "" << std::setfill('0') << std::uppercase << std::setw(2) 
 					<< static_cast<unsigned>(l.code.byte[0]);
 			else
@@ -71,8 +72,8 @@ void CodeList::dump(std::string fileName) {
 /**
 * Construtor de Line.
 */
-CodeList::Line::Line(std::string source, unsigned lineNumber, unsigned address, unsigned sizeCode)
-	: source(source), lineNumber(lineNumber), address(address), sizeCode(sizeCode), code({ 0x0000 }) {
+CodeList::Line::Line(unsigned lineNumber, std::string source)
+	: source(source), lineNumber(lineNumber), address(0), codeSize(0), code({ 0x0000 }) {
 	// Retira comentários e procura a primeira palavra da linha.
 	std::string command = source.substr(0, source.find_last_of(';'));
 
@@ -88,4 +89,14 @@ CodeList::Line::Line(std::string source, unsigned lineNumber, unsigned address, 
 
 	// Obtém dados sobre o mnemônico e o operando.
 	sline >> this->mnemonic >> this->operand;
+}
+
+
+/**
+* Define os valores relacioandos a um código de instrução.
+*/
+void CodeList::Line::setCode(unsigned address, unsigned size, unsigned code) {
+	this->address = address;
+	this->codeSize = size;
+	this->code.value = code;
 }
