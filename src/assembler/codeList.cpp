@@ -36,34 +36,8 @@ void CodeList::dump(std::string fileName) {
 		<< std::setw(10) << "CODE" << std::setw(5) << "" << std::left << "SOURCE" << std::endl;
 
 	// Linhas
-	for (const auto &l : this->list) {
-		if (!l.lineNumber)
-			continue;
-
-		// Número da linha
-		listFile << std::setw(5) << std::right << l.lineNumber;
-
-		// Informações referentes à linha
-		if (l.codeSize) {
-			listFile << std::setw(6) << "0x" << std::setw(4) << std::setfill('0') << std::uppercase 
-				<< std::hex << l.address << std::setfill(' ');
-			
-			if (l.codeSize == 1)
-				listFile << std::setw(9) << "" << std::setfill('0') << std::uppercase << std::setw(2) 
-					<< static_cast<unsigned>(l.code.byte[0]);
-			else
-				listFile << std::setw(6) << "" << std::setfill('0') << std::uppercase << std::setw(2) 
-					<< static_cast<unsigned>(l.code.byte[1]) << " " << std::setw(2) << static_cast<unsigned>(l.code.byte[0]);
-
-			listFile << std::dec << std::setfill(' ');
-		}
-		else {
-			listFile << std::setw(21) << "";
-		}
-
-		// Texto referente à linha
-		listFile << std::setw(5) << "" << std::left << l.source << std::endl;
-	}
+	for (const auto &l : this->list)
+		listFile << l.str();
 
 	listFile.close();
 }
@@ -99,4 +73,38 @@ void CodeList::Line::setCode(unsigned address, unsigned size, unsigned code) {
 	this->address = address;
 	this->codeSize = size;
 	this->code.value = code;
+}
+
+
+/**
+* Formato de exibição da linha.
+*/
+std::string CodeList::Line::str() const {
+	std::stringstream line;
+
+	// Número da linha
+	line << std::setw(5) << std::right << this->lineNumber;
+
+	// Informações referentes à linha
+	if (this->codeSize) {
+		line << std::setw(6) << "0x" << std::setw(4) << std::setfill('0') << std::uppercase
+			<< std::hex << this->address << std::setfill(' ');
+
+		if (this->codeSize == 1)
+			line << std::setw(9) << "" << std::setfill('0') << std::uppercase << std::setw(2)
+				<< static_cast<unsigned>(this->code.byte[0]);
+		else
+			line << std::setw(6) << "" << std::setfill('0') << std::uppercase << std::setw(2)
+				<< static_cast<unsigned>(this->code.byte[1]) << " " << std::setw(2) << static_cast<unsigned>(this->code.byte[0]);
+
+		line << std::dec << std::setfill(' ');
+	}
+	else {
+		line << std::setw(21) << "";
+	}
+
+	// Texto referente à linha
+	line << std::setw(5) << "" << std::left << this->source << std::endl;
+
+	return line.str();
 }

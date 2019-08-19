@@ -27,6 +27,7 @@ struct CodeList::Line {
 	Line(unsigned lineNumber, std::string source);
 
 	void setCode(unsigned address, unsigned size, unsigned code);
+	std::string str() const;
 
 	std::string label;
 	std::string mnemonic;
@@ -39,6 +40,7 @@ struct CodeList::Line {
 		std::uint8_t byte[2];
 	} code;
 
+private:
 	std::string source;
 	unsigned lineNumber;
 
