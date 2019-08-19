@@ -6,14 +6,13 @@
 
 #include "assembler.hpp"
 
-#include <iostream>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 
 
 /**
-* TODO
+* Executa a montagem do código.
 */
 void Assembler::assemble() {
 	// Roda os passos do assembler e verifica se todas as labels usadas foram definidas.
@@ -24,8 +23,6 @@ void Assembler::assemble() {
 	// Escreve arquivos com os dados da tabela de labels e outro com a listagem.
 	this->labels.dump(this->inputFile + ".labels");
 	this->list.dump(this->inputFile + ".lst");
-
-	return;
 }
 
 
@@ -33,11 +30,11 @@ void Assembler::assemble() {
 * TODO
 */
 void Assembler::runStep(bool step) {
+	std::string line;
 	std::ifstream assemblyFile(this->inputFile);
-	unsigned instructionCounter = 0;
-	unsigned lineNumber = 1;
+	unsigned instructionCounter = 0x0000;
 
-	for (std::string line; std::getline(assemblyFile, line); lineNumber++) {
+	for (unsigned lineNumber = 1; std::getline(assemblyFile, line); lineNumber++) {
 		// Leitura dos dados da linha.
 		Line lineValues(line, lineNumber);
 
@@ -245,15 +242,3 @@ void Assembler::makeBin(std::string outputFile) {
 	return;
 }
 
-Assembler::Line::Line(std::string text, unsigned int position) : text(text), position(position) {
-	// Retira comentários e procura a primeira palavra da linha.
-	std::string command = text.substr(0, text.find_last_of(';'));
-	std::istringstream sline(command);
-
-	// Obtém dados sobre a label, se houver uma.
-	if (command.size() && !std::isspace(command[0]))
-		sline >> this->label;
-
-	// Obtém dados sobre o mnemônico e o operando.
-	sline >> this->mnemonic >> this->operand;
-}

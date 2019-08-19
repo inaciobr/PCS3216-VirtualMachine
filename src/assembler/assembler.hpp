@@ -11,7 +11,7 @@
 #include <functional>
 
 #include "label.hpp"
-#include "ListCode.hpp"
+#include "codeList.hpp"
 
 
 class Assembler {
@@ -19,12 +19,11 @@ public:
 	Assembler(std::string fileName) : inputFile(fileName) {};
 	~Assembler() {};
 
-	void assemble();
-
 	struct Instruction;
 	struct processedInstruction;
 	struct Line;
 
+	void assemble();
 	static const std::unordered_map<std::string, Instruction> mnemonics;
 
 private:
@@ -40,12 +39,22 @@ private:
 	std::string inputFile;
 
 	Label labels;
-	ListCode list;
+	CodeList list;
 
 	std::vector<uint8_t> code;
 
 };
 
+struct Assembler::Line {
+	Line(std::string text, unsigned position);
+
+	std::string text;
+	unsigned int position;
+
+	std::string label;
+	std::string mnemonic;
+	std::string operand;
+};
 
 /**
  *  Estrutura para a definição de instruções e pseudo-instruções.
@@ -61,17 +70,6 @@ struct Assembler::processedInstruction {
 	unsigned int nextInstruction;
 	unsigned int size;
 	unsigned int code;
-};
-
-struct Assembler::Line {
-	Line(std::string text, unsigned int position);
-
-	std::string text;
-	unsigned int position;
-
-	std::string label;
-	std::string mnemonic;
-	std::string operand;
 };
 
 /**
