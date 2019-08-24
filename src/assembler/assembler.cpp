@@ -1,8 +1,8 @@
 /**
-* assembler.cpp
-* PCS 3216 - Sistemas de Programação - 2019
-* Bruno Brandão Inácio
-*/
+ * assembler.cpp
+ * PCS 3216 - Sistemas de Programação - 2019
+ * Bruno Brandão Inácio
+ */
 
 #include "assembler.hpp"
 
@@ -10,26 +10,33 @@
 #include <iomanip>
 #include <sstream>
 
+#include <iostream>
+
 
 /**
-* Executa a montagem do código.
-*/
+ * Executa a montagem do código.
+ */
 void Assembler::assemble() {
 	// Roda os passos do assembler e verifica se todas as labels usadas foram definidas.
-	this->runStep(0);
-	this->labels.checkIntegrity();
-	this->runStep(1);
+	this->firstPass();
+	this->secondPass();
+
+	std::string outputFile = this->inputFile.substr(0, this->inputFile.find_last_of('.'));
 
 	// Escreve arquivos com os dados da tabela de labels e outro com a listagem.
 	this->labels.dump(this->inputFile + ".labels");
 	this->list.dump(this->inputFile + ".lst");
+
+	// Escreve arquivo com a saída em decimal (ASCII) e outro em binário.
+	this->makeObject(outputFile + ".obj");
+	this->makeBin(outputFile + ".bin");
 }
 
 
 /**
-* TODO
-*/
-void Assembler::runStep(bool step) {
+ * Executa o primeiro passo da montagem do código.
+ */
+void Assembler::firstPass() {
 	std::string line;
 	std::ifstream assemblyFile(this->inputFile);
 	unsigned instructionCounter = 0x0000;
@@ -39,21 +46,21 @@ void Assembler::runStep(bool step) {
 		auto lineData = this->list.insert({ lineNumber, line });
 
 		// Trata caso onde há definição de label.
-		if (!step && lineData.label.size())
+		if (lineData.label.size())
 			this->labels.define(lineData.label, instructionCounter);
 
 		// Trata instruções e pseudo-instruções.
 		try {
-			Assembler::processedInstruction instruction = this->processInstruction(lineData, instructionCounter, step);
-
-			if (step) {
-				lineData.setCode(instructionCounter, instruction.size, instruction.code);
+			if (unsigned size = this->firstProcess(lineData);  size) {
+				lineData.setInstruction(instructionCounter, size);
+				instructionCounter += size;
 			}
-
-			instructionCounter = instruction.nextInstruction;
 		}
 		catch (std::string e) {
 			throw "\n" + std::to_string(lineNumber) + ": " + e;
+		}
+		catch (int e) {
+			instructionCounter = e;
 		}
 	}
 
@@ -61,14 +68,34 @@ void Assembler::runStep(bool step) {
 
 	if (instructionCounter >= 0xFFFE)
 		throw "\nO codigo possui tamanho " + std::to_string(instructionCounter) + ", ultrapassando o limite de 0xFFFE";
-
-	return;
 }
 
 
-Assembler::processedInstruction Assembler::processInstruction(CodeList::Line lineValues, unsigned int instructionCounter, bool step) {
+/**
+* Executa o segundo passo da montagem do código.
+*/
+void Assembler::secondPass() {
+	this->labels.checkIntegrity();
+
+	for (auto &lineData: this->list) {
+		// Trata instruções e pseudo-instruções.
+		try {
+			unsigned code = this->secondProcess(lineData);
+			lineData.code.value = code;
+		}
+		catch (std::string e) {
+			throw "\n" + std::to_string(lineData.lineNumber) + ": " + e;
+		}
+	}
+}
+
+
+/**
+ * Realiza o processamento de instruções do primeiro passo.
+ */
+unsigned Assembler::firstProcess(CodeList::Line lineValues) {
 	if (!lineValues.mnemonic.size())
-		return { instructionCounter, 0, 0 };
+		return 0;
 
 	// Obtém a instrução ou pseudo-instrução.
 	Assembler::Instruction instruction;
@@ -79,54 +106,46 @@ Assembler::processedInstruction Assembler::processInstruction(CodeList::Line lin
 		throw std::string("O mnemonico " + lineValues.mnemonic + " nao foi reconhecido.");
 	}
 
-	uint16_t operandValue = this->operandValue(lineValues.operand, step, instruction.allowLabel);
-	uint16_t code = instruction.code + (operandValue & instruction.mask);
+	int operandValue = this->operandValue(lineValues.operand, instruction.allowLabel, false); // TODO
 
 	// Trata pseudo-instruções
-	if (lineValues.mnemonic == "$") {
-		instructionCounter += operandValue;
-	}
-	else if (lineValues.mnemonic == "@") {
-		instructionCounter = operandValue;
+	if (lineValues.mnemonic == "@")
+		throw operandValue;
 
-		if (step) {
-			if (this->code.size()) {
-				this->saveObject();
-				this->code.clear();
-			}
+	if (lineValues.mnemonic == "$")
+		return operandValue;
 
-			this->code.push_back((operandValue & 0xFF00) >> 8);
-			this->code.push_back(operandValue & 0xFF);
-			this->code.push_back(0x00);
-		}
-	}
-	else if (step && lineValues.mnemonic == "#") {
-		if (!this->code.size())
-			throw std::string("Tentativa de finalizar um programa que não foi inicializado.");
-
-		this->code[2] = this->code.size() - 3;
-
-		this->saveObject();
-		this->code.clear();
-	}
-	else {
-		instructionCounter += instruction.size;
-
-		if (step) {
-			if (instruction.size == 2)
-				this->code.push_back((code & 0xFF00) >> 8);
-
-			this->code.push_back(code & 0xFF);
-		}
-	}
-
-	return { instructionCounter, instruction.size, code };
+	return instruction.size;
 }
 
+
 /**
-* Obtém o valor do operando e valida as labels.
-*/
-int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
+ * Realiza o processamento de instruções do primeiro passo.
+ */
+unsigned Assembler::secondProcess(CodeList::Line lineValues) {
+	if (!lineValues.mnemonic.size())
+		return 0;
+
+	// Obtém a instrução ou pseudo-instrução.
+	Assembler::Instruction instruction;
+	try {
+		instruction = Assembler::mnemonics.at(lineValues.mnemonic);
+	}
+	catch (const std::out_of_range) {
+		throw std::string("O mnemonico " + lineValues.mnemonic + " nao foi reconhecido.");
+	}
+
+	int operandValue = this->operandValue(lineValues.operand, instruction.allowLabel, false);
+
+	return instruction.size;
+}
+
+
+
+/**
+ * Obtém o valor do operando e valida as labels.
+ */
+int Assembler::operandValue(std::string operand, bool allowLabel, bool evaluateLabel) {
 	// Verifica se o operando está definido (todas as operações possuem um operando).
 	if (!operand.size())
 		throw std::string("Operando nao definido.");
@@ -150,7 +169,7 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 		throw std::string("\'" + label + "\' foi identificada como sendo uma label e não é suportada neste caso.");
 
 	// Primeiro passo adiciona a label à lista de labels não definidas.
-	if (!step) {
+	if (!evaluateLabel) {
 		this->labels.waitFor(label);
 		return Label::UNDEFINED;
 	}
@@ -163,7 +182,7 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 		return value;
 
 	// Caso haja alguma operação com a label, obtém o valor do segundo termo desta operação.
-	auto secondTermValue = operandValue(operand.substr(posOperation + 1), step, allowLabel);
+	auto secondTermValue = operandValue(operand.substr(posOperation + 1), allowLabel, evaluateLabel);
 
 	// Calcula o valor resultante da operação em cima da label.
 	switch (operand[posOperation]) {
@@ -192,19 +211,8 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 
 
 /**
-* TODO
-*/
-void Assembler::saveObject() {
-	std::string outputFile = this->inputFile.substr(0, this->inputFile.find_last_of('.'));
-
-	this->makeObject(outputFile + ".obj");
-	this->makeBin(outputFile + ".bin");
-}
-
-
-/**
-* TODO
-*/
+ * TODO
+ */
 void Assembler::makeObject(std::string outputFile) {
 	std::ofstream objectFile(outputFile);
 	uint8_t checkSum = 0xFF;
@@ -225,8 +233,8 @@ void Assembler::makeObject(std::string outputFile) {
 
 
 /**
-* TODO
-*/
+ * TODO
+ */
 void Assembler::makeBin(std::string outputFile) {
 	std::ofstream objectFile(outputFile, std::ofstream::binary);
 	uint8_t checkSum = 0xFF;

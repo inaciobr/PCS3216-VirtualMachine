@@ -1,8 +1,8 @@
 /**
-* codeList.cpp
-* PCS 3216 - Sistemas de Programação - 2019
-* Bruno Brandão Inácio
-*/
+ * codeList.cpp
+ * PCS 3216 - Sistemas de Programação - 2019
+ * Bruno Brandão Inácio
+ */
 
 #include "codeList.hpp"
 
@@ -36,7 +36,7 @@ void CodeList::dump(std::string fileName) {
 		<< std::setw(10) << "CODE" << std::setw(5) << "" << std::left << "SOURCE" << std::endl;
 
 	// Linhas
-	for (const auto &l : this->list)
+	for (const auto &l: this->list)
 		listFile << l.str();
 
 	listFile.close();
@@ -44,8 +44,8 @@ void CodeList::dump(std::string fileName) {
 
 
 /**
-* Construtor de Line.
-*/
+ * Construtor de Line.
+ */
 CodeList::Line::Line(unsigned lineNumber, std::string source)
 	: source(source), lineNumber(lineNumber), address(0), codeSize(0), code({ 0x0000 }) {
 	// Retira comentários e procura a primeira palavra da linha.
@@ -67,18 +67,17 @@ CodeList::Line::Line(unsigned lineNumber, std::string source)
 
 
 /**
-* Define os valores relacioandos a um código de instrução.
-*/
-void CodeList::Line::setCode(unsigned address, unsigned size, unsigned code) {
+ * Define os valores relacioandos a um código de instrução.
+ */
+void CodeList::Line::setInstruction(unsigned address, unsigned size) {
 	this->address = address;
 	this->codeSize = size;
-	this->code.value = code;
 }
 
 
 /**
-* Formato de exibição da linha.
-*/
+ * Formato de exibição da linha.
+ */
 std::string CodeList::Line::str() const {
 	std::stringstream line;
 

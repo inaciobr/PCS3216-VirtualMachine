@@ -1,8 +1,8 @@
 /**
-* interface.cpp
-* PCS 3216 - Sistemas de Programação - 2019
-* Bruno Brandão Inácio
-*/
+ * interface.cpp
+ * PCS 3216 - Sistemas de Programação - 2019
+ * Bruno Brandão Inácio
+ */
 
 #include "interface.hpp"
 #include "assembler.hpp"
@@ -60,8 +60,8 @@ std::string Interface::inputFile() {
 
 
 /**
-* Realiza a chamada para a interface.
-*/
+ * Realiza a chamada para a interface.
+ */
 int main() {
 	Interface pc;
 	pc.start();

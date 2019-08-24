@@ -1,8 +1,8 @@
 /**
-* label.cpp
-* PCS 3216 - Sistemas de Programação - 2019
-* Bruno Brandão Inácio
-*/
+ * label.cpp
+ * PCS 3216 - Sistemas de Programação - 2019
+ * Bruno Brandão Inácio
+ */
 
 #include "label.hpp"
 #include "assembler.hpp"
@@ -47,7 +47,7 @@ unsigned Label::getValue(std::string label) {
  * Verifica se foi atribuído um valor a todas as labels identificadas.
  */
 void Label::checkIntegrity() {
-	for (const auto &l : this->labels)
+	for (const auto &l: this->labels)
 		if (l.second == Label::UNDEFINED)
 			throw "A label " + l.first + " foi usada, mas nao foi definida.";
 }

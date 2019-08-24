@@ -1,14 +1,13 @@
 /**
-* assembler.hpp
-* PCS 3216 - Sistemas de Programação - 2019
-* Bruno Brandão Inácio
-*/
+ * assembler.hpp
+ * PCS 3216 - Sistemas de Programação - 2019
+ * Bruno Brandão Inácio
+ */
 
 #pragma once
 
 #include <string>
 #include <unordered_map>
-#include <functional>
 
 #include "label.hpp"
 #include "codeList.hpp"
@@ -19,18 +18,19 @@ public:
 	Assembler(std::string fileName) : inputFile(fileName) {};
 	~Assembler() {};
 
-	struct Instruction;
-	struct processedInstruction;
-
 	void assemble();
+
+	struct Instruction;
 	static const std::unordered_map<std::string, Instruction> mnemonics;
 
 private:
-	void runStep(bool step);
-	void saveObject();
+	void firstPass();
+	void secondPass();
 
-	processedInstruction processInstruction(CodeList::Line lineValues, unsigned int instructionCounter, bool step);
-	int operandValue(std::string, bool step, bool allowLabel = true);
+	unsigned firstProcess(CodeList::Line lineValues);
+	unsigned secondProcess(CodeList::Line lineValues);
+
+	int operandValue(std::string operand, bool allowLabel, bool evaluateLabel);
 	
 	void makeObject(std::string outputFile);
 	void makeBin(std::string outputFile);
@@ -40,9 +40,9 @@ private:
 	Label labels;
 	CodeList list;
 
-	std::vector<uint8_t> code;
-
+	std::vector<int> code;
 };
+
 
 /**
  *  Estrutura para a definição de instruções e pseudo-instruções.
@@ -54,11 +54,6 @@ struct Assembler::Instruction {
 	bool allowLabel;
 };
 
-struct Assembler::processedInstruction {
-	unsigned int nextInstruction;
-	unsigned int size;
-	unsigned int code;
-};
 
 /**
  *  Tabela de mnemônicos.
