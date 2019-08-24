@@ -28,7 +28,6 @@ private:
 	void secondPass();
 
 	unsigned firstProcess(CodeList::Line lineValues);
-	unsigned secondProcess(CodeList::Line lineValues);
 
 	int operandValue(std::string operand, bool allowLabel, bool evaluateLabel);
 	

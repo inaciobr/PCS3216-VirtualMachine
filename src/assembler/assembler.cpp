@@ -50,6 +50,9 @@ void Assembler::firstPass() {
 			this->labels.define(lineData.label, instructionCounter);
 
 		// Trata instruções e pseudo-instruções.
+		if (!lineData.mnemonic.size())
+			continue;
+
 		try {
 			if (unsigned size = this->firstProcess(lineData);  size) {
 				lineData.setInstruction(instructionCounter, size);
@@ -70,33 +73,10 @@ void Assembler::firstPass() {
 		throw "\nO codigo possui tamanho " + std::to_string(instructionCounter) + ", ultrapassando o limite de 0xFFFE";
 }
 
-
-/**
-* Executa o segundo passo da montagem do código.
-*/
-void Assembler::secondPass() {
-	this->labels.checkIntegrity();
-
-	for (auto &lineData: this->list) {
-		// Trata instruções e pseudo-instruções.
-		try {
-			unsigned code = this->secondProcess(lineData);
-			lineData.code.value = code;
-		}
-		catch (std::string e) {
-			throw "\n" + std::to_string(lineData.lineNumber) + ": " + e;
-		}
-	}
-}
-
-
 /**
  * Realiza o processamento de instruções do primeiro passo.
  */
 unsigned Assembler::firstProcess(CodeList::Line lineValues) {
-	if (!lineValues.mnemonic.size())
-		return 0;
-
 	// Obtém a instrução ou pseudo-instrução.
 	Assembler::Instruction instruction;
 	try {
@@ -120,26 +100,33 @@ unsigned Assembler::firstProcess(CodeList::Line lineValues) {
 
 
 /**
- * Realiza o processamento de instruções do primeiro passo.
- */
-unsigned Assembler::secondProcess(CodeList::Line lineValues) {
-	if (!lineValues.mnemonic.size())
-		return 0;
+* Executa o segundo passo da montagem do código.
+*/
+void Assembler::secondPass() {
+	this->labels.checkIntegrity();
 
-	// Obtém a instrução ou pseudo-instrução.
-	Assembler::Instruction instruction;
-	try {
-		instruction = Assembler::mnemonics.at(lineValues.mnemonic);
+	for (auto &lineData: this->list) {
+		// Trata instruções e pseudo-instruções.
+		try {
+			if (!lineData.mnemonic.size() || lineData.mnemonic == "$" || lineData.mnemonic == "@")
+				continue;
+
+			// Obtém a instrução ou pseudo-instrução.
+			Assembler::Instruction instruction = Assembler::mnemonics.at(lineData.mnemonic);
+
+			int operandValue = this->operandValue(lineData.operand, instruction.allowLabel, true);
+
+			if (lineData.mnemonic == "#") {
+
+			}
+
+			lineData.code.value = instruction.code | (operandValue & instruction.mask);
+		}
+		catch (std::string e) {
+			throw "\n" + std::to_string(lineData.lineNumber) + ": " + e;
+		}
 	}
-	catch (const std::out_of_range) {
-		throw std::string("O mnemonico " + lineValues.mnemonic + " nao foi reconhecido.");
-	}
-
-	int operandValue = this->operandValue(lineValues.operand, instruction.allowLabel, false);
-
-	return instruction.size;
 }
-
 
 
 /**
