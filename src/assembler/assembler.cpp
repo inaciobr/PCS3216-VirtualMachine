@@ -17,9 +17,12 @@
  * Executa a montagem do código.
  */
 void Assembler::assemble() {
+	this->labels = Label();
+	this->list = CodeList();
+
 	// Roda os passos do assembler e verifica se todas as labels usadas foram definidas.
 	this->firstPass();
-	this->secondPass();
+	//this->secondPass();
 
 	std::string outputFile = this->inputFile.substr(0, this->inputFile.find_last_of('.'));
 
@@ -42,60 +45,46 @@ void Assembler::firstPass() {
 	unsigned instructionCounter = 0x0000;
 
 	for (unsigned lineNumber = 1; std::getline(assemblyFile, line); lineNumber++) {
-		// Leitura dos dados da linha.
 		auto lineData = this->list.insert({ lineNumber, line });
 
-		// Trata caso onde há definição de label.
 		if (lineData.label.size())
 			this->labels.define(lineData.label, instructionCounter);
 
-		// Trata instruções e pseudo-instruções.
 		if (!lineData.mnemonic.size())
 			continue;
 
+		// Nesta etapa, é necessário apenas descobrir as labels usadas,
+		// o tamanho das instruções e e tratar pseudo-instruções.
+		Assembler::Instruction instruction;
+
 		try {
-			if (unsigned size = this->firstProcess(lineData);  size) {
-				lineData.setInstruction(instructionCounter, size);
-				instructionCounter += size;
+			instruction = Assembler::mnemonics.at(lineData.mnemonic);
+		}
+		catch (const std::out_of_range) {
+			throw std::string("O mnemonico " + lineData.mnemonic + " nao foi reconhecido.");
+		}
+
+		try {
+			int operandValue = this->operandValue(lineData.operand, instruction.allowLabel, false);
+
+			if (lineData.mnemonic == "@") {
+				instructionCounter = operandValue;
+				continue;
 			}
+
+			int size = lineData.mnemonic == "$" ? operandValue : instruction.size;
+			lineData.reserve(instructionCounter, size);
+			instructionCounter += lineData.mnemonic == "$" ? operandValue : instruction.size;
 		}
 		catch (std::string e) {
 			throw "\n" + std::to_string(lineNumber) + ": " + e;
-		}
-		catch (int e) {
-			instructionCounter = e;
 		}
 	}
 
 	assemblyFile.close();
 
 	if (instructionCounter >= 0xFFFE)
-		throw "\nO codigo possui tamanho " + std::to_string(instructionCounter) + ", ultrapassando o limite de 0xFFFE";
-}
-
-/**
- * Realiza o processamento de instruções do primeiro passo.
- */
-unsigned Assembler::firstProcess(CodeList::Line lineValues) {
-	// Obtém a instrução ou pseudo-instrução.
-	Assembler::Instruction instruction;
-	try {
-		instruction = Assembler::mnemonics.at(lineValues.mnemonic);
-	}
-	catch (const std::out_of_range) {
-		throw std::string("O mnemonico " + lineValues.mnemonic + " nao foi reconhecido.");
-	}
-
-	int operandValue = this->operandValue(lineValues.operand, instruction.allowLabel, false); // TODO
-
-	// Trata pseudo-instruções
-	if (lineValues.mnemonic == "@")
-		throw operandValue;
-
-	if (lineValues.mnemonic == "$")
-		return operandValue;
-
-	return instruction.size;
+		throw "\nO codigo possui tamanho " + std::to_string(instructionCounter) + ", ultrapassando o limite de 0xFFFE.";
 }
 
 
@@ -131,6 +120,7 @@ void Assembler::secondPass() {
 
 /**
  * Obtém o valor do operando e valida as labels.
+ * TODO
  */
 int Assembler::operandValue(std::string operand, bool allowLabel, bool evaluateLabel) {
 	// Verifica se o operando está definido (todas as operações possuem um operando).
@@ -237,4 +227,3 @@ void Assembler::makeBin(std::string outputFile) {
 
 	return;
 }
-

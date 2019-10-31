@@ -27,8 +27,6 @@ private:
 	void firstPass();
 	void secondPass();
 
-	unsigned firstProcess(CodeList::Line lineValues);
-
 	int operandValue(std::string operand, bool allowLabel, bool evaluateLabel);
 	
 	void makeObject(std::string outputFile);

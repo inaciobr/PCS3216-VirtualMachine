@@ -35,7 +35,7 @@ public:
 struct CodeList::Line {
 	Line(unsigned lineNumber, std::string source);
 
-	void setInstruction(unsigned address, unsigned size);
+	void reserve(unsigned address, unsigned size);
 	std::string str() const;
 
 	std::string label;

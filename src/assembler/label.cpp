@@ -23,10 +23,10 @@ void Label::waitFor(std::string label) {
  * Define o valor de uma label.
  */
 void Label::define(std::string label, unsigned int address) {
-	label = label.substr(0, label.find_last_of(":+-/*?\\"));
+	label = label.substr(0, label.find_first_of(":+-/*?\\"));
 
 	if (Assembler::mnemonics.find(label) != Assembler::mnemonics.end())
-		throw label + " não pode ser utilizado como uma label pois é um mnemônico de uma instrução.";
+		throw label + " nao pode ser utilizado como uma label pois e um mnemonico de uma instrucao.";
 
 	if (!this->labels.count(label) || this->labels.at(label) == Label::UNDEFINED)
 		this->labels[label] = address;

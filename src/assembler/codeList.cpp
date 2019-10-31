@@ -69,7 +69,7 @@ CodeList::Line::Line(unsigned lineNumber, std::string source)
 /**
  * Define os valores relacioandos a um código de instrução.
  */
-void CodeList::Line::setInstruction(unsigned address, unsigned size) {
+void CodeList::Line::reserve(unsigned address, unsigned size) {
 	this->address = address;
 	this->codeSize = size;
 }

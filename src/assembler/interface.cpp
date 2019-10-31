@@ -46,9 +46,9 @@ void Interface::menu() {
  * Controla a entrada de um arquivo.
  */
 std::string Interface::inputFile() {
-	std::string fileName;
-
 	std::cout << "Digite o nome do arquivo (dentro da pasta programs): ";
+
+	std::string fileName;
 	std::cin >> fileName;
 	fileName = "programs/" + fileName;
 
