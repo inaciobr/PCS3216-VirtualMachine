@@ -31,8 +31,8 @@ void Assembler::assemble() {
 	this->list.dump(this->inputFile + ".lst");
 
 	// Escreve arquivo com a saída em decimal (ASCII) e outro em binário.
-	this->makeObject(outputFile + ".obj");
-	this->makeBin(outputFile + ".bin");
+	this->makeCode(outputFile + ".bin", Assembler::flushBin);
+	this->makeCode(outputFile + ".obj", Assembler::flushHex);
 }
 
 
@@ -41,7 +41,6 @@ void Assembler::assemble() {
  */
 void Assembler::firstPass() {
 	unsigned instructionCounter = 0x0000;
-	bool isBlock = false;
 
 	std::string line;
 	std::ifstream assemblyFile(this->inputFile);
@@ -69,21 +68,17 @@ void Assembler::firstPass() {
 
 			int operandValue = this->operandValue(lineData.operand, instruction.allowLabel, false);
 
-			if (!isBlock) {
-				if (lineData.mnemonic != "@")
-					throw std::string("O mnemonico " + lineData.mnemonic + " esta sendo usado fora de um bloco.");
-
+			if (lineData.mnemonic == "@") {
 				instructionCounter = operandValue;
-				isBlock = true;
+				continue;
 			}
-			else {
-				if (lineData.mnemonic == "#")
-					isBlock = false;
 
-				if (lineData.codeSize = lineData.mnemonic == "$" ? operandValue : instruction.size; lineData.codeSize) {
-					lineData.address = instructionCounter;
-					instructionCounter += lineData.codeSize;
-				}
+			if (lineData.mnemonic == "#")
+				break;
+
+			if (lineData.codeSize = lineData.mnemonic == "$" ? operandValue : instruction.size; lineData.codeSize) {
+				lineData.address = instructionCounter;
+				instructionCounter += lineData.codeSize;
 			}
 		}
 
@@ -106,7 +101,7 @@ void Assembler::secondPass() {
 	this->labels.checkIntegrity();
 
 	for (auto &lineData: this->list) {
-		if (!lineData.codeSize)
+		if (lineData.mnemonic.empty() || lineData.mnemonic == "$")
 			continue;
 
 		// Trata instruções e pseudo-instruções.
@@ -120,13 +115,14 @@ void Assembler::secondPass() {
 		catch (std::string e) {
 			throw "\n" + std::to_string(lineData.lineNumber) + ": " + e;
 		}
+
+		std::cout << lineData.mnemonic << ": " << std::hex << lineData.code.value << std::endl;
 	}
 }
 
 
 /**
  * Obtém o valor do operando e valida as labels.
- * TODO
  */
 int Assembler::operandValue(std::string operand, bool allowLabel, bool evaluateLabel) {
 	// Verifica se o operando está definido (todas as operações possuem um operando).
@@ -194,42 +190,103 @@ int Assembler::operandValue(std::string operand, bool allowLabel, bool evaluateL
 
 
 /**
- * TODO
+ * A saída será feita em um arquivo binário, pronto para ser lido pela máquina virtual.
  */
-void Assembler::makeObject(std::string outputFile) {
-	std::ofstream objectFile(outputFile);
-	uint8_t checkSum = 0xFF;
+void Assembler::flushBin(std::string outputFile, uint8_t code[]) {
+	std::ofstream objectFile(outputFile, std::ofstream::binary | std::ofstream::app);
+	uint8_t checkSum = 0x00;
 
-	objectFile << std::hex << std::setfill('0');
-
-	for (const auto& c : this->code) {
-		checkSum ^= c;
-		objectFile << std::uppercase << std::setw(2) << static_cast<unsigned>(c) << " ";
+	for (int i = 0; i < code[0]; i++) {
+		checkSum += code[i];
+		objectFile << code[i];
 	}
 
-	objectFile << static_cast<unsigned>(checkSum);
-
+	objectFile << checkSum;
 	objectFile.close();
-
-	return;
 }
 
 
 /**
- * TODO
+ * A saída será feita em um arquivo de texto em código ascii
+ * com o código exibido em hexadecimal.
  */
-void Assembler::makeBin(std::string outputFile) {
-	std::ofstream objectFile(outputFile, std::ofstream::binary);
-	uint8_t checkSum = 0xFF;
+void Assembler::flushHex(std::string outputFile, uint8_t code[]) {
+	std::ofstream objectFile(outputFile, std::ofstream::app);
+	uint8_t checkSum = 0x00;
 
-	for (const auto& c : this->code) {
-		checkSum ^= c;
-		objectFile << c;
+	objectFile << std::hex << std::setfill('0');
+
+	for (int i = 0; i < code[0]; i++) {
+		checkSum += code[i];
+		objectFile << std::uppercase << std::setw(2) << static_cast<unsigned>(code[i]) << " ";
+
+		// Quebra de linha para facilitar a visualização.
+		if (!((i + 1) % 16))
+			objectFile << std::endl;
 	}
 
-	objectFile << checkSum;
-
+	objectFile << std::uppercase << std::setw(2) << static_cast<unsigned>(checkSum) << "\n\n";
 	objectFile.close();
+}
 
-	return;
+/**
+ * Monta o vetor de saída do código montado.
+ * O formato é dado a seguir:
+ * byte 1: Quantidade de bytes a serem lidos
+ * byte 2 e 3: Endereço onde o código deve ser montado
+ * último byte: checksum
+ * retante: código
+ */
+void Assembler::makeCode(std::string outputFile, void (*flush)(std::string, uint8_t[]) = Assembler::flushBin) {
+	// Limpar arquivo.
+	std::ofstream a(outputFile);
+	a.close();
+
+	uint8_t code[0xFE] = {};
+
+	for (const auto &line : this->list) {
+		if (!line.codeSize)
+			continue;
+
+		if (code[0] == 0) {
+			code[1] = (line.address & 0xFF00) >> 8;
+			code[2] = line.address & 0xFF;
+			code[0] = 3;
+		}
+		
+		if (line.codeSize == 2) {
+			code[code[0]++] = line.code.byte[1];
+			code[code[0]++] = line.code.byte[0];
+		}
+		else if (line.codeSize > 2) {
+			int size = line.codeSize;
+			int address = line.address;
+
+			while ((code[0] + size) >= 0xFF) {
+				size -= 0xFE - code[0];
+				address += 0xFE - code[0];
+				code[0] = 0xFE;
+
+				flush(outputFile, code);
+				memset(code, 0, sizeof(code));
+
+				code[1] = (address & 0xFF00) >> 8;
+				code[2] = address & 0xFF;
+				code[0] = 3;
+			}
+
+			code[0] += size;
+		}
+		else {
+			code[code[0]++] = line.code.byte[0];
+		}
+
+
+		if (code[0] >= 0xFE) {
+			flush(outputFile, code);
+			memset(code, 0, sizeof(code));
+		}
+	}
+
+	flush(outputFile, code);
 }

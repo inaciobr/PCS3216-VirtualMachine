@@ -29,15 +29,14 @@ private:
 
 	int operandValue(std::string operand, bool allowLabel, bool evaluateLabel);
 	
-	void makeObject(std::string outputFile);
-	void makeBin(std::string outputFile);
+	void makeCode(std::string outputFile, void (*flush)(std::string, uint8_t[]));
+	static void flushBin(std::string outputFile, uint8_t code[]);
+	static void flushHex(std::string outputFile, uint8_t code[]);
 
 	std::string inputFile;
 
 	Label labels;
 	CodeList list;
-
-	std::vector<int> code; // TODO
 };
 
 
@@ -78,5 +77,5 @@ inline const std::unordered_map<std::string, Assembler::Instruction> Assembler::
 	{ "K",	{ 0x00,		1,	0xFF,	false	} },	// DB
 	{ "$",	{ 0x00,		0,	0x00,	false	} },	// BLOC
 	{ "@",	{ 0x0000,	0,	0xFFFF,	false	} },	// ORG
-	{ "#",	{ 0x0000,	0,	0x0000,	true	} },	// END
+	{ "#",	{ 0x0000,	0,	0xFFFF,	true	} },	// END
 };

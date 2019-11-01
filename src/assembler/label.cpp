@@ -63,7 +63,7 @@ void Label::dump(std::string fileName) {
 	labelsFile << fileName << " LABEL TABLE FILE" << std::endl;
 	labelsFile << "=================================================" << std::endl;
 
-	labelsFile << std::left << std::setw(20) << "Label" << "Value\n" << std::endl;
+	labelsFile << std::left << std::setw(20) << "Label" << "Value" << std::endl;
 
 	for (const auto &l : this->labels)
 		labelsFile << std::left << std::setw(20) << l.first

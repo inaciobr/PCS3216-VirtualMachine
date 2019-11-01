@@ -21,7 +21,7 @@ END     OS  /F        ; Finaliza o programa
                       ; Variáveis
 COUNT   K   /A
 
-ARR     $   10
+ARR     $   300
                       ; Definição de valores.
 ONE     K   01
 TWO     K   02
