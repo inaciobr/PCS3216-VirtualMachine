@@ -10,13 +10,15 @@
 #include <iomanip>
 #include <sstream>
 
+#include <iostream>
+
 
 /**
- * Insere nova linha na memória.
+ * Insere nova linha na lista.
  */
-CodeList::Line CodeList::insert(CodeList::Line line) {
+CodeList::Line& CodeList::insert(CodeList::Line line) {
 	this->list.push_back(line);
-	return line;
+	return this->list.back();
 }
 
 
@@ -32,8 +34,8 @@ void CodeList::dump(std::string fileName) {
 	listFile << "=================================================" << std::endl;
 
 	// Títulos
-	listFile << std::right << std::setw(5) << "LINE" << std::setw(10) << "ADDRESS"
-		<< std::setw(10) << "CODE" << std::setw(5) << "" << std::left << "SOURCE" << std::endl;
+	listFile << std::right << std::setw(5) << "LINE" << std::setw(12) << "ADDRESS"
+		<< std::setw(12) << "CODE" << std::setw(5) << "" << std::left << "SOURCE" << std::endl;
 
 	// Linhas
 	for (const auto &l: this->list)
@@ -47,11 +49,10 @@ void CodeList::dump(std::string fileName) {
  * Construtor de Line.
  */
 CodeList::Line::Line(unsigned lineNumber, std::string source)
-	: source(source), lineNumber(lineNumber), address(0), codeSize(0), code({ 0x0000 }) {
-	// Retira comentários e procura a primeira palavra da linha.
-	std::string command = source.substr(0, source.find_last_of(';'));
+	: source(source), lineNumber(lineNumber), address(0), codeSize(0), code{ 0x0000 } {
+	// Retira comentários.
+	std::string command = source.substr(0, source.find_first_of(';'));
 
-	// Linha não nenhum comando.
 	if (!command.size())
 		return;
 
@@ -67,15 +68,6 @@ CodeList::Line::Line(unsigned lineNumber, std::string source)
 
 
 /**
- * Define os valores relacioandos a um código de instrução.
- */
-void CodeList::Line::reserve(unsigned address, unsigned size) {
-	this->address = address;
-	this->codeSize = size;
-}
-
-
-/**
  * Formato de exibição da linha.
  */
 std::string CodeList::Line::str() const {
@@ -86,20 +78,20 @@ std::string CodeList::Line::str() const {
 
 	// Informações referentes à linha
 	if (this->codeSize) {
-		line << std::setw(6) << "0x" << std::setw(4) << std::setfill('0') << std::uppercase
+		line << std::setw(8) << "0x" << std::setw(4) << std::setfill('0') << std::uppercase
 			<< std::hex << this->address << std::setfill(' ');
 
-		if (this->codeSize == 1)
-			line << std::setw(9) << "" << std::setfill('0') << std::uppercase << std::setw(2)
-				<< static_cast<unsigned>(this->code.byte[0]);
-		else
-			line << std::setw(6) << "" << std::setfill('0') << std::uppercase << std::setw(2)
+		if (this->codeSize == 2)
+			line << std::setw(7) << "" << std::setfill('0') << std::uppercase << std::setw(2)
 				<< static_cast<unsigned>(this->code.byte[1]) << " " << std::setw(2) << static_cast<unsigned>(this->code.byte[0]);
+		else
+			line << std::setw(10) << "" << std::setfill('0') << std::uppercase << std::setw(2)
+				<< static_cast<unsigned>(this->code.byte[0]);
 
 		line << std::dec << std::setfill(' ');
 	}
 	else {
-		line << std::setw(21) << "";
+		line << std::setw(24) << "";
 	}
 
 	// Texto referente à linha

@@ -17,7 +17,7 @@ public:
 
 	struct Line;
 
-	Line insert(Line line);
+	Line& insert(Line line);
 	void dump(std::string fileName);
 
 	std::vector<Line> list;
@@ -35,7 +35,6 @@ public:
 struct CodeList::Line {
 	Line(unsigned lineNumber, std::string source);
 
-	void reserve(unsigned address, unsigned size);
 	std::string str() const;
 
 	std::string label;

@@ -22,7 +22,7 @@ void Assembler::assemble() {
 
 	// Roda os passos do assembler e verifica se todas as labels usadas foram definidas.
 	this->firstPass();
-	//this->secondPass();
+	this->secondPass();
 
 	std::string outputFile = this->inputFile.substr(0, this->inputFile.find_last_of('.'));
 
@@ -40,12 +40,14 @@ void Assembler::assemble() {
  * Executa o primeiro passo da montagem do código.
  */
 void Assembler::firstPass() {
+	unsigned instructionCounter = 0x0000;
+	bool isBlock = false;
+
 	std::string line;
 	std::ifstream assemblyFile(this->inputFile);
-	unsigned instructionCounter = 0x0000;
 
 	for (unsigned lineNumber = 1; std::getline(assemblyFile, line); lineNumber++) {
-		auto lineData = this->list.insert({ lineNumber, line });
+		auto &lineData = this->list.insert({ lineNumber, line });
 
 		if (lineData.label.size())
 			this->labels.define(lineData.label, instructionCounter);
@@ -58,24 +60,33 @@ void Assembler::firstPass() {
 		Assembler::Instruction instruction;
 
 		try {
-			instruction = Assembler::mnemonics.at(lineData.mnemonic);
-		}
-		catch (const std::out_of_range) {
-			throw std::string("O mnemonico " + lineData.mnemonic + " nao foi reconhecido.");
-		}
-
-		try {
-			int operandValue = this->operandValue(lineData.operand, instruction.allowLabel, false);
-
-			if (lineData.mnemonic == "@") {
-				instructionCounter = operandValue;
-				continue;
+			try {
+				instruction = Assembler::mnemonics.at(lineData.mnemonic);
+			}
+			catch (const std::out_of_range) {
+				throw std::string("O mnemonico " + lineData.mnemonic + " nao foi reconhecido.");
 			}
 
-			int size = lineData.mnemonic == "$" ? operandValue : instruction.size;
-			lineData.reserve(instructionCounter, size);
-			instructionCounter += lineData.mnemonic == "$" ? operandValue : instruction.size;
+			int operandValue = this->operandValue(lineData.operand, instruction.allowLabel, false);
+
+			if (!isBlock) {
+				if (lineData.mnemonic != "@")
+					throw std::string("O mnemonico " + lineData.mnemonic + " esta sendo usado fora de um bloco.");
+
+				instructionCounter = operandValue;
+				isBlock = true;
+			}
+			else {
+				if (lineData.mnemonic == "#")
+					isBlock = false;
+
+				if (lineData.codeSize = lineData.mnemonic == "$" ? operandValue : instruction.size; lineData.codeSize) {
+					lineData.address = instructionCounter;
+					instructionCounter += lineData.codeSize;
+				}
+			}
 		}
+
 		catch (std::string e) {
 			throw "\n" + std::to_string(lineNumber) + ": " + e;
 		}
@@ -95,19 +106,14 @@ void Assembler::secondPass() {
 	this->labels.checkIntegrity();
 
 	for (auto &lineData: this->list) {
+		if (!lineData.codeSize)
+			continue;
+
 		// Trata instruções e pseudo-instruções.
 		try {
-			if (!lineData.mnemonic.size() || lineData.mnemonic == "$" || lineData.mnemonic == "@")
-				continue;
-
 			// Obtém a instrução ou pseudo-instrução.
 			Assembler::Instruction instruction = Assembler::mnemonics.at(lineData.mnemonic);
-
 			int operandValue = this->operandValue(lineData.operand, instruction.allowLabel, true);
-
-			if (lineData.mnemonic == "#") {
-
-			}
 
 			lineData.code.value = instruction.code | (operandValue & instruction.mask);
 		}

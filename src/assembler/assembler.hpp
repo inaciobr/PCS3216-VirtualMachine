@@ -37,7 +37,7 @@ private:
 	Label labels;
 	CodeList list;
 
-	std::vector<int> code;
+	std::vector<int> code; // TODO
 };
 
 
