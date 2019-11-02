@@ -1,8 +1,8 @@
 /**
-* label.cpp
-* PCS 3216 - Sistemas de Programação - 2019
-* Bruno Brandão Inácio
-*/
+ * label.cpp
+ * PCS 3216 - Sistemas de Programação - 2019
+ * Bruno Brandão Inácio
+ */
 
 #include "label.hpp"
 #include "assembler.hpp"
@@ -23,10 +23,10 @@ void Label::waitFor(std::string label) {
  * Define o valor de uma label.
  */
 void Label::define(std::string label, unsigned int address) {
-	label = label.substr(0, label.find_last_of(":+-/*?\\"));
+	label = label.substr(0, label.find_first_of(":+-/*?\\"));
 
 	if (Assembler::mnemonics.find(label) != Assembler::mnemonics.end())
-		throw label + " não pode ser utilizado como uma label pois é um mnemônico de uma instrução.";
+		throw label + " nao pode ser utilizado como uma label pois e um mnemonico de uma instrucao.";
 
 	if (!this->labels.count(label) || this->labels.at(label) == Label::UNDEFINED)
 		this->labels[label] = address;
@@ -47,7 +47,7 @@ unsigned Label::getValue(std::string label) {
  * Verifica se foi atribuído um valor a todas as labels identificadas.
  */
 void Label::checkIntegrity() {
-	for (const auto &l : this->labels)
+	for (const auto &l: this->labels)
 		if (l.second == Label::UNDEFINED)
 			throw "A label " + l.first + " foi usada, mas nao foi definida.";
 }
@@ -63,7 +63,7 @@ void Label::dump(std::string fileName) {
 	labelsFile << fileName << " LABEL TABLE FILE" << std::endl;
 	labelsFile << "=================================================" << std::endl;
 
-	labelsFile << std::left << std::setw(20) << "Label" << "Value\n" << std::endl;
+	labelsFile << std::left << std::setw(20) << "Label" << "Value" << std::endl;
 
 	for (const auto &l : this->labels)
 		labelsFile << std::left << std::setw(20) << l.first

@@ -127,13 +127,13 @@
     <ClInclude Include="..\src\assembler\assembler.hpp" />
     <ClInclude Include="..\src\assembler\interface.hpp" />
     <ClInclude Include="..\src\assembler\label.hpp" />
-    <ClInclude Include="..\src\assembler\listCode.hpp" />
+    <ClInclude Include="..\src\assembler\codeList.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\assembler\assembler.cpp" />
     <ClCompile Include="..\src\assembler\interface.cpp" />
     <ClCompile Include="..\src\assembler\label.cpp" />
-    <ClCompile Include="..\src\assembler\listCode.cpp" />
+    <ClCompile Include="..\src\assembler\codeList.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

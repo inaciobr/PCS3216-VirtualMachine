@@ -1,59 +1,87 @@
 /**
-* assembler.cpp
-* PCS 3216 - Sistemas de Programação - 2019
-* Bruno Brandão Inácio
-*/
+ * assembler.cpp
+ * PCS 3216 - Sistemas de Programação - 2019
+ * Bruno Brandão Inácio
+ */
 
 #include "assembler.hpp"
 
-#include <iostream>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 
+#include <iostream>
+
 
 /**
-* TODO
-*/
+ * Executa a montagem do código.
+ */
 void Assembler::assemble() {
+	this->labels = Label();
+	this->list = CodeList();
+
 	// Roda os passos do assembler e verifica se todas as labels usadas foram definidas.
-	this->runStep(0);
-	this->labels.checkIntegrity();
-	this->runStep(1);
+	this->firstPass();
+	this->secondPass();
+
+	std::string outputFile = this->inputFile.substr(0, this->inputFile.find_last_of('.'));
 
 	// Escreve arquivos com os dados da tabela de labels e outro com a listagem.
 	this->labels.dump(this->inputFile + ".labels");
 	this->list.dump(this->inputFile + ".lst");
 
-	return;
+	// Escreve arquivo com a saída em decimal (ASCII) e outro em binário.
+	this->makeCode(outputFile + ".bin", Assembler::flushBin);
+	this->makeCode(outputFile + ".obj", Assembler::flushHex);
 }
 
 
 /**
-* TODO
-*/
-void Assembler::runStep(bool step) {
+ * Executa o primeiro passo da montagem do código.
+ */
+void Assembler::firstPass() {
+	unsigned instructionCounter = 0x0000;
+
+	std::string line;
 	std::ifstream assemblyFile(this->inputFile);
-	unsigned instructionCounter = 0;
-	unsigned lineNumber = 1;
 
-	for (std::string line; std::getline(assemblyFile, line); lineNumber++) {
-		// Leitura dos dados da linha.
-		Line lineValues(line, lineNumber);
+	for (unsigned lineNumber = 1; std::getline(assemblyFile, line); lineNumber++) {
+		auto &lineData = this->list.insert({ lineNumber, line });
 
-		// Trata caso onde há definição de label.
-		if (!step && lineValues.label.size())
-			this->labels.define(lineValues.label, instructionCounter);
+		if (lineData.label.size())
+			this->labels.define(lineData.label, instructionCounter);
 
-		// Trata instruções e pseudo-instruções.
+		if (!lineData.mnemonic.size())
+			continue;
+
+		// Nesta etapa, é necessário apenas descobrir as labels usadas,
+		// o tamanho das instruções e e tratar pseudo-instruções.
+		Assembler::Instruction instruction;
+
 		try {
-			Assembler::processedInstruction instruction = this->processInstruction(lineValues, instructionCounter, step);
+			try {
+				instruction = Assembler::mnemonics.at(lineData.mnemonic);
+			}
+			catch (const std::out_of_range) {
+				throw std::string("O mnemonico " + lineData.mnemonic + " nao foi reconhecido.");
+			}
 
-			if (step)
-				this->list.insert({ lineNumber, line, instructionCounter, instruction.size, instruction.code });
+			int operandValue = this->operandValue(lineData.operand, instruction.allowLabel, false);
 
-			instructionCounter = instruction.nextInstruction;
+			if (lineData.mnemonic == "@") {
+				instructionCounter = operandValue;
+				continue;
+			}
+
+			if (lineData.mnemonic == "#")
+				break;
+
+			if (lineData.codeSize = lineData.mnemonic == "$" ? operandValue : instruction.size; lineData.codeSize) {
+				lineData.address = instructionCounter;
+				instructionCounter += lineData.codeSize;
+			}
 		}
+
 		catch (std::string e) {
 			throw "\n" + std::to_string(lineNumber) + ": " + e;
 		}
@@ -62,73 +90,41 @@ void Assembler::runStep(bool step) {
 	assemblyFile.close();
 
 	if (instructionCounter >= 0xFFFE)
-		throw "\nO codigo possui tamanho " + std::to_string(instructionCounter) + ", ultrapassando o limite de 0xFFFE";
-
-	return;
+		throw "\nO codigo possui tamanho " + std::to_string(instructionCounter) + ", ultrapassando o limite de 0xFFFE.";
 }
 
-
-Assembler::processedInstruction Assembler::processInstruction(Assembler::Line lineValues, unsigned int instructionCounter, bool step) {
-	if (!lineValues.mnemonic.size())
-		return { instructionCounter, 0, 0 };
-
-	// Obtém a instrução ou pseudo-instrução.
-	Assembler::Instruction instruction;
-	try {
-		instruction = Assembler::mnemonics.at(lineValues.mnemonic);
-	}
-	catch (const std::out_of_range) {
-		throw std::string("O mnemonico " + lineValues.mnemonic + " nao foi reconhecido.");
-	}
-
-	uint16_t operandValue = this->operandValue(lineValues.operand, step, instruction.allowLabel);
-	uint16_t code = instruction.code + (operandValue & instruction.mask);
-
-	// Trata pseudo-instruções
-	if (lineValues.mnemonic == "$") {
-		instructionCounter += operandValue;
-	}
-	else if (lineValues.mnemonic == "@") {
-		instructionCounter = operandValue;
-
-		if (step) {
-			if (this->code.size()) {
-				this->saveObject();
-				this->code.clear();
-			}
-
-			this->code.push_back((operandValue & 0xFF00) >> 8);
-			this->code.push_back(operandValue & 0xFF);
-			this->code.push_back(0x00);
-		}
-	}
-	else if (step && lineValues.mnemonic == "#") {
-		if (!this->code.size())
-			throw std::string("Tentativa de finalizar um programa que não foi inicializado.");
-
-		this->code[2] = this->code.size() - 3;
-
-		this->saveObject();
-		this->code.clear();
-	}
-	else {
-		instructionCounter += instruction.size;
-
-		if (step) {
-			if (instruction.size == 2)
-				this->code.push_back((code & 0xFF00) >> 8);
-
-			this->code.push_back(code & 0xFF);
-		}
-	}
-
-	return { instructionCounter, instruction.size, code };
-}
 
 /**
-* Obtém o valor do operando e valida as labels.
+* Executa o segundo passo da montagem do código.
 */
-int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
+void Assembler::secondPass() {
+	this->labels.checkIntegrity();
+
+	for (auto &lineData: this->list) {
+		if (lineData.mnemonic.empty() || lineData.mnemonic == "$")
+			continue;
+
+		// Trata instruções e pseudo-instruções.
+		try {
+			// Obtém a instrução ou pseudo-instrução.
+			Assembler::Instruction instruction = Assembler::mnemonics.at(lineData.mnemonic);
+			int operandValue = this->operandValue(lineData.operand, instruction.allowLabel, true);
+
+			lineData.code.value = instruction.code | (operandValue & instruction.mask);
+		}
+		catch (std::string e) {
+			throw "\n" + std::to_string(lineData.lineNumber) + ": " + e;
+		}
+
+		std::cout << lineData.mnemonic << ": " << std::hex << lineData.code.value << std::endl;
+	}
+}
+
+
+/**
+ * Obtém o valor do operando e valida as labels.
+ */
+int Assembler::operandValue(std::string operand, bool allowLabel, bool evaluateLabel) {
 	// Verifica se o operando está definido (todas as operações possuem um operando).
 	if (!operand.size())
 		throw std::string("Operando nao definido.");
@@ -152,7 +148,7 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 		throw std::string("\'" + label + "\' foi identificada como sendo uma label e não é suportada neste caso.");
 
 	// Primeiro passo adiciona a label à lista de labels não definidas.
-	if (!step) {
+	if (!evaluateLabel) {
 		this->labels.waitFor(label);
 		return Label::UNDEFINED;
 	}
@@ -165,7 +161,7 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 		return value;
 
 	// Caso haja alguma operação com a label, obtém o valor do segundo termo desta operação.
-	auto secondTermValue = operandValue(operand.substr(posOperation + 1), step, allowLabel);
+	auto secondTermValue = operandValue(operand.substr(posOperation + 1), allowLabel, evaluateLabel);
 
 	// Calcula o valor resultante da operação em cima da label.
 	switch (operand[posOperation]) {
@@ -194,66 +190,103 @@ int Assembler::operandValue(std::string operand, bool step, bool allowLabel) {
 
 
 /**
-* TODO
-*/
-void Assembler::saveObject() {
-	std::string outputFile = this->inputFile.substr(0, this->inputFile.find_last_of('.'));
+ * A saída será feita em um arquivo binário, pronto para ser lido pela máquina virtual.
+ */
+void Assembler::flushBin(std::string outputFile, uint8_t code[]) {
+	std::ofstream objectFile(outputFile, std::ofstream::binary | std::ofstream::app);
+	uint8_t checkSum = 0x00;
 
-	this->makeObject(outputFile + ".obj");
-	this->makeBin(outputFile + ".bin");
-}
-
-
-/**
-* TODO
-*/
-void Assembler::makeObject(std::string outputFile) {
-	std::ofstream objectFile(outputFile);
-	uint8_t checkSum = 0xFF;
-
-	objectFile << std::hex << std::setfill('0');
-
-	for (const auto& c : this->code) {
-		checkSum ^= c;
-		objectFile << std::uppercase << std::setw(2) << static_cast<unsigned>(c) << " ";
-	}
-
-	objectFile << static_cast<unsigned>(checkSum);
-
-	objectFile.close();
-
-	return;
-}
-
-
-/**
-* TODO
-*/
-void Assembler::makeBin(std::string outputFile) {
-	std::ofstream objectFile(outputFile, std::ofstream::binary);
-	uint8_t checkSum = 0xFF;
-
-	for (const auto& c : this->code) {
-		checkSum ^= c;
-		objectFile << c;
+	for (int i = 0; i < code[0]; i++) {
+		checkSum += code[i];
+		objectFile << code[i];
 	}
 
 	objectFile << checkSum;
-
 	objectFile.close();
-
-	return;
 }
 
-Assembler::Line::Line(std::string text, unsigned int position) : text(text), position(position) {
-	// Retira comentários e procura a primeira palavra da linha.
-	std::string command = text.substr(0, text.find_last_of(';'));
-	std::istringstream sline(command);
 
-	// Obtém dados sobre a label, se houver uma.
-	if (command.size() && !std::isspace(command[0]))
-		sline >> this->label;
+/**
+ * A saída será feita em um arquivo de texto em código ascii
+ * com o código exibido em hexadecimal.
+ */
+void Assembler::flushHex(std::string outputFile, uint8_t code[]) {
+	std::ofstream objectFile(outputFile, std::ofstream::app);
+	uint8_t checkSum = 0x00;
 
-	// Obtém dados sobre o mnemônico e o operando.
-	sline >> this->mnemonic >> this->operand;
+	objectFile << std::hex << std::setfill('0');
+
+	for (int i = 0; i < code[0]; i++) {
+		checkSum += code[i];
+		objectFile << std::uppercase << std::setw(2) << static_cast<unsigned>(code[i]) << " ";
+
+		// Quebra de linha para facilitar a visualização.
+		if (!((i + 1) % 16))
+			objectFile << std::endl;
+	}
+
+	objectFile << std::uppercase << std::setw(2) << static_cast<unsigned>(checkSum) << "\n\n";
+	objectFile.close();
+}
+
+/**
+ * Monta o vetor de saída do código montado.
+ * O formato é dado a seguir:
+ * byte 1: Quantidade de bytes a serem lidos
+ * byte 2 e 3: Endereço onde o código deve ser montado
+ * último byte: checksum
+ * retante: código
+ */
+void Assembler::makeCode(std::string outputFile, void (*flush)(std::string, uint8_t[]) = Assembler::flushBin) {
+	// Limpar arquivo.
+	std::ofstream a(outputFile);
+	a.close();
+
+	uint8_t code[0xFE] = {};
+
+	for (const auto &line : this->list) {
+		if (!line.codeSize)
+			continue;
+
+		if (code[0] == 0) {
+			code[1] = (line.address & 0xFF00) >> 8;
+			code[2] = line.address & 0xFF;
+			code[0] = 3;
+		}
+		
+		if (line.codeSize == 2) {
+			code[code[0]++] = line.code.byte[1];
+			code[code[0]++] = line.code.byte[0];
+		}
+		else if (line.codeSize > 2) {
+			int size = line.codeSize;
+			int address = line.address;
+
+			while ((code[0] + size) >= 0xFF) {
+				size -= 0xFE - code[0];
+				address += 0xFE - code[0];
+				code[0] = 0xFE;
+
+				flush(outputFile, code);
+				memset(code, 0, sizeof(code));
+
+				code[1] = (address & 0xFF00) >> 8;
+				code[2] = address & 0xFF;
+				code[0] = 3;
+			}
+
+			code[0] += size;
+		}
+		else {
+			code[code[0]++] = line.code.byte[0];
+		}
+
+
+		if (code[0] >= 0xFE) {
+			flush(outputFile, code);
+			memset(code, 0, sizeof(code));
+		}
+	}
+
+	flush(outputFile, code);
 }
