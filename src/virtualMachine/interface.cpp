@@ -5,8 +5,7 @@
 */
 
 #include "interface.hpp"
-#include "../assembler/assembler.hpp"
-#include "../virtualMachine/virtualMachine.hpp"
+#include "virtualMachine.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -23,68 +22,13 @@ void Interface::start() {
 
 
 /**
- * Cria o menu para o usuário.
-*/
-void Interface::menu() {
-	int menu;
-	enum options { EXIT, ASSEMBLER, VIRTUALMACHINE };
-
-	std::cout << std::endl;
-	std::cout << EXIT << ". Sair" << std::endl;
-	std::cout << ASSEMBLER << ". Assembler" << std::endl;
-	std::cout << VIRTUALMACHINE << ". Virtual Machine" << std::endl;
-	std::cout << "\nDigite o numero da opcao desejada: ";
-
-		
-	switch (std::cin >> menu; menu) {
-	case ASSEMBLER:
-		this->assemblerMenu();
-		break;
-
-	case VIRTUALMACHINE:
-		this->virtualMachineMenu();
-		break;
-
-	case EXIT:
-	default:
-		break;
-	}
-
-	return;
-}
-
-
-/**
- * Inicializa o assembler.
- */
-void Interface::assemblerMenu() {
-	std::string fileName = this->inputFile();
-
-	Assembler assembler(fileName);
-	std::string binFile;
-
-	try {
-		assembler.assemble();
-	}
-	catch (std::string e) {
-		std::cout << e << std::endl;
-		return;
-	}
-
-	std::cout << "\nO codigo foi montado com sucesso." << std::endl;
-	return;
-}
-
-
-/**
  * Inicializa a máquina virtual.
  */
-void Interface::virtualMachineMenu() {
+void Interface::menu() {
 	VirtualMachine VM;
 
 	std::cout << "\nA Maquina Virtual esta em execucao" << std::endl;
 	VM.printMemoryBanks();
-
 
 	int menu;
 	enum options { EXIT, RUN, READMEMORY, READPOINTERS };
@@ -99,7 +43,16 @@ void Interface::virtualMachineMenu() {
 
 		switch (std::cin >> menu; menu) {
 		case RUN:
-			break;
+			//std::string fileName = this->inputFile();
+
+			//VM.load(fileName);
+			try {
+				VM.run();
+			}
+			catch (std::string e) {
+				std::cout << e << std::endl;
+				return;
+			}
 
 		case READMEMORY: {
 			int addr, size;
@@ -121,19 +74,6 @@ void Interface::virtualMachineMenu() {
 		default:
 			return;
 		}
-
-		this->virtualMachineMenu();
-		break;
-	}
-	//std::string fileName = this->inputFile();
-
-	//VM.load(fileName);
-	try {
-		VM.run();
-	}
-	catch (std::string e) {
-		std::cout << e << std::endl;
-		return;
 	}
 
 	return;
@@ -158,4 +98,11 @@ std::string Interface::inputFile() {
 	}
 
 	return fileName;
+}
+
+int main() {
+	Interface pc;
+	pc.start();
+
+	return 0;
 }

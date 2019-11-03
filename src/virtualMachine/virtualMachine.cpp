@@ -5,9 +5,6 @@
 #include <iomanip>
 #include <fstream>
 
-#include "../interface/interface.hpp"
-
-
 VirtualMachine::VirtualMachine(unsigned int numBanks, unsigned int bankSize) :
 	currentByte(0), accumulator(0), indirectMode(false), currentBank(0)
 {
@@ -21,7 +18,7 @@ VirtualMachine::VirtualMachine(unsigned int numBanks, unsigned int bankSize) :
 	std::vector<char> buffer(header[2]);
 	loader.read(buffer.data(), header[2]);
 
-	for (const auto& v : buffer)
+	for (const auto &v: buffer)
 		this->mainMemory[0].setValue(instructionCounter++, v & 0xFF);
 
 	loader.close();
@@ -45,8 +42,7 @@ void VirtualMachine::printPointers() const {
 
 void VirtualMachine::printMemoryBanks() const {
 	std::cout << std::to_string(this->mainMemory.size()) << " bancos de memoria ativos." << std::endl;
-
-	return;
+
 }
 
 void VirtualMachine::printMemory(int addr, int size) const {
@@ -70,8 +66,7 @@ void VirtualMachine::printMemory(int addr, int size) const {
 }
 
 
-uint16_t VirtualMachine::getOperand2Bytes()
-{
+uint16_t VirtualMachine::getOperand2Bytes() {
 	return static_cast<uint16_t>((this->currentByte << 8) | this->nextByte()) & 0x0FFF;
 }
 
@@ -85,9 +80,7 @@ void VirtualMachine::updatePC(uint16_t operand) {
 
 		return;
 	}
-
-	this->instructionCounter = operand;
-	return;
+	this->instructionCounter = operand;
 }
 
 
@@ -98,8 +91,6 @@ void VirtualMachine::runInstruction(uint8_t type) {
 	catch (const std::out_of_range) {
 		throw std::string("A instrução " + std::to_string(type) + " não foi reconhecida.");
 	}
-
-	return;
 }
 
 
@@ -125,7 +116,6 @@ uint8_t VirtualMachine::getIndirectValue(uint16_t pos) {
 */
 void VirtualMachine::JP() {
 	this->updatePC(this->getOperand2Bytes());
-	return;
 }
 
 
@@ -135,8 +125,6 @@ void VirtualMachine::JP() {
 void VirtualMachine::JZ() {
 	if (!this->accumulator)
 		this->updatePC(this->getOperand2Bytes());
-
-	return;
 }
 
 
@@ -146,8 +134,6 @@ void VirtualMachine::JZ() {
 void VirtualMachine::JN() {
 	if (this->accumulator < 0)
 		this->updatePC(this->getOperand2Bytes());
-
-	return;
 }
 
 /*
@@ -163,7 +149,6 @@ void VirtualMachine::CN() {
 */
 void VirtualMachine::ADD() {
 	this->accumulator += this->getIndirectValue(this->getOperand2Bytes());
-	return;
 }
 
 
@@ -172,7 +157,6 @@ void VirtualMachine::ADD() {
 */
 void VirtualMachine::SUB() {
 	this->accumulator -= this->getIndirectValue(this->getOperand2Bytes());
-	return;
 }
 
 
@@ -181,7 +165,6 @@ void VirtualMachine::SUB() {
 */
 void VirtualMachine::MUL() {
 	this->accumulator *= this->getIndirectValue(this->getOperand2Bytes());
-	return;
 }
 
 
@@ -190,7 +173,6 @@ void VirtualMachine::MUL() {
 */
 void VirtualMachine::DIV() {
 	this->accumulator /= this->getIndirectValue(this->getOperand2Bytes());
-	return;
 }
 
 
@@ -199,7 +181,6 @@ void VirtualMachine::DIV() {
 */
 void VirtualMachine::LD() {
 	this->accumulator = this->getIndirectValue(this->getOperand2Bytes());
-	return;
 }
 
 

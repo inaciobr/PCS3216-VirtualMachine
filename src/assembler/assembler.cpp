@@ -115,8 +115,6 @@ void Assembler::secondPass() {
 		catch (std::string e) {
 			throw "\n" + std::to_string(lineData.lineNumber) + ": " + e;
 		}
-
-		std::cout << lineData.mnemonic << ": " << std::hex << lineData.code.value << std::endl;
 	}
 }
 
@@ -196,7 +194,7 @@ void Assembler::flushBin(std::string outputFile, uint8_t code[]) {
 	std::ofstream objectFile(outputFile, std::ofstream::binary | std::ofstream::app);
 	uint8_t checkSum = 0x00;
 
-	for (int i = 0; i < code[0]; i++) {
+	for (int i = 0; i < code[2] + 3; i++) {
 		checkSum += code[i];
 		objectFile << code[i];
 	}
@@ -216,7 +214,7 @@ void Assembler::flushHex(std::string outputFile, uint8_t code[]) {
 
 	objectFile << std::hex << std::setfill('0');
 
-	for (int i = 0; i < code[0]; i++) {
+	for (int i = 0; i < code[2] + 3; i++) {
 		checkSum += code[i];
 		objectFile << std::uppercase << std::setw(2) << static_cast<unsigned>(code[i]) << " ";
 
@@ -242,51 +240,50 @@ void Assembler::makeCode(std::string outputFile, void (*flush)(std::string, uint
 	std::ofstream a(outputFile);
 	a.close();
 
-	uint8_t code[0xFE] = {};
+	uint8_t seq[0xFE] = {};
+	uint8_t *code = seq + 3;
 
 	for (const auto &line : this->list) {
 		if (!line.codeSize)
 			continue;
 
-		if (code[0] == 0) {
-			code[1] = (line.address & 0xFF00) >> 8;
-			code[2] = line.address & 0xFF;
-			code[0] = 3;
+		if (seq[2] == 0) {
+			seq[0] = (line.address & 0xFF00) >> 8;
+			seq[1] = line.address & 0xFF;
 		}
 		
 		if (line.codeSize == 2) {
-			code[code[0]++] = line.code.byte[1];
-			code[code[0]++] = line.code.byte[0];
+			code[seq[2]++] = line.code.byte[1];
+			code[seq[2]++] = line.code.byte[0];
 		}
 		else if (line.codeSize > 2) {
 			int size = line.codeSize;
 			int address = line.address;
 
-			while ((code[0] + size) >= 0xFF) {
-				size -= 0xFE - code[0];
-				address += 0xFE - code[0];
-				code[0] = 0xFE;
+			while ((seq[2] + size) >= 0xFF) {
+				size -= 0xFE - seq[2];
+				address += 0xFE - seq[2];
+				seq[2] = 0xFE;
 
-				flush(outputFile, code);
-				memset(code, 0, sizeof(code));
+				flush(outputFile, seq);
+				memset(seq, 0, sizeof(seq));
 
-				code[1] = (address & 0xFF00) >> 8;
-				code[2] = address & 0xFF;
-				code[0] = 3;
+				seq[0] = (address & 0xFF00) >> 8;
+				seq[1] = address & 0xFF;
 			}
 
-			code[0] += size;
+			seq[2] += size;
 		}
 		else {
-			code[code[0]++] = line.code.byte[0];
+			code[seq[2]++] = line.code.byte[0];
 		}
 
 
-		if (code[0] >= 0xFE) {
-			flush(outputFile, code);
-			memset(code, 0, sizeof(code));
+		if (seq[2] >= 0xFE) {
+			flush(outputFile, seq);
+			memset(seq, 0, sizeof(seq));
 		}
 	}
 
-	flush(outputFile, code);
+	flush(outputFile, seq);
 }

@@ -9,10 +9,7 @@
 
 struct Interface {
 	void start();
-
 	void menu();
-	void assemblerMenu();
-	void virtualMachineMenu();
 
 	static std::string inputFile();
 };
